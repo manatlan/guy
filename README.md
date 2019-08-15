@@ -6,7 +6,7 @@ It's the new name, but it is the same thing ... but:
 * no more "Server mode" : only window mode !
 * works on Android (with kivy/buildozer)
 
-You can build a py/html app which will work on **windows**, on **mac**, on **linux** or on **android** (it should be easy to port to iOS too) !
+You can build a "py3/html" app which will work on **windows**, on **mac**, on **linux** or on **android** (it should be easy to port to iOS too) !
 
 Here is the same app :
 <p align="center">
