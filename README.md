@@ -1,6 +1,6 @@
 **GUY** is like [wuy](https://github.com/manatlan/wuy)
 
-It's the new name, but it is the same thing ...
+It's the new name, but it is the same thing ... but:
 
 * more robust
 * no more "Server mode" : only window mode !
