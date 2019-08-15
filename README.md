@@ -2,7 +2,7 @@
 
 It's the new name, but it is the same thing ... but:
 
-* more robust (complete rewriting from scratch, without desgin flaws)
+* more robust (complete rewriting from scratch, without design flaws)
 * no more "Server mode" : only window mode !
 * works on Android (with kivy/buildozer)
 
