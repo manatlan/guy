@@ -7,3 +7,8 @@ It's the new name, but it is the same thing ... but:
 * works on Android (with kivy/buildozer)
 
 You can build a py/html app which will work on **windows**, on **mac**, on **linux** or on **android** (it should be easy to port to iOS too) !
+
+<p align="center">
+    <img src="https://github.com/manatlan/guy/blob/master/shot_android9.png"/><br/>
+    <img src="https://github.com/manatlan/guy/blob/master/shot_ubuntu.png"/><br/>
+</p>
