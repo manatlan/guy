@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os,sys,re,traceback
 # #############################################################################
@@ -15,6 +15,7 @@ import os,sys,re,traceback
 __version__="0.3"
 """
 changelog 0.3:
+    - runner accept a log parameter, default to False
     - manage ctrl-c
     - better runner detection in android/kivy
     - .server(port=8000) : can set a specific port in server mode, else 8000
@@ -48,6 +49,7 @@ import inspect
 import uuid
 
 class FULLSCREEN: pass
+LOG=None
 
 GETPATH=os.getcwd
 if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
@@ -61,7 +63,8 @@ def isFree(ip, port):
 
 
 def log(*a):
-    print(" ".join([str(i) for i in a]))
+    if LOG:
+        print(" ".join([str(i) for i in a]))
 
 def serialize(obj):
     def toJSDate(d):
@@ -476,7 +479,10 @@ class Guy:
 
     def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
+        global LOG
+        LOG=log
         if "android" in sys.executable: #TODO: add executable for kivy/iOs mac/apple
+            LOG=False
             runAndroid(self)
         else:
             os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
@@ -503,6 +509,9 @@ class Guy:
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
+        global LOG
+        LOG=log
+
         os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self )
         ws.start()
@@ -520,6 +529,9 @@ class Guy:
 
     def server(self,port=8000,log=False):
         """ Run the guy's app for multiple clients (web mode) """
+        global LOG
+        LOG=log
+
         os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self ,"0.0.0.0",port=port )
         ws.start()
@@ -611,11 +623,14 @@ var guy={
         }
         return JSON.parse(x, reviver )
     },
+    _log: %s,
     log:function(_) {
-        var args=Array.prototype.slice.call(arguments)
-        args.unshift("--")
+        if(guy._log) {
+            var args=Array.prototype.slice.call(arguments)
+            args.unshift("--")
 
-        console.log.apply(console.log,args.map(x => x==null?"NULL":x));
+            console.log.apply(console.log,args.map(x => x==null?"NULL":x));
+        }
     },
     _ws: setupWS( function(ws){guy._ws = ws; document.dispatchEvent( new CustomEvent("init") )} ),
     on: function( evt, callback ) {     // to register an event on a callback
@@ -744,7 +759,8 @@ var self={};
 
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
-        'if(!document.title) document.title="%s";' % self._name
+        'if(!document.title) document.title="%s";' % self._name,
+        "true" if LOG else "false"
     )
 
         for k in self._routes.keys():
