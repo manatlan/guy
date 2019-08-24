@@ -5,7 +5,7 @@
     </span>
 </template>
 <script>
-{
+export default {
     data() {
         return {cpt:0};
     },
