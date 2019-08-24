@@ -105,3 +105,4 @@ ENV/
 config.json
 
 __pycache__/guy.cpython-37.pyc
+android/
