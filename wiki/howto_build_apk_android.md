@@ -25,6 +25,18 @@ buildozer init
 Note:
     - it will create ...
 
-** will be continue **
+** TODO **
+** TODO **
+** TODO **
 
 (mainly from https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android )
+
+
+## Authorize "Clear Text Traffic" in your APK
+You will need to authorize your app to access the embedded python http server, which serve on localhost "http" only. To do that, you must enable "Clear Text Traffic" in your "AndroidManifest.xml". Using buildozer, you can change the template which will be used to generate the original.
+
+Add `android:usesCleartextTraffic="true"` in tag `<application>` in `AndroidManifest.tmpl.xml`
+
+** TODO **
+** TODO **
+** TODO **
