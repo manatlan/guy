@@ -26,3 +26,5 @@ Note:
     - it will create ...
 
 ** will be continue **
+
+(mainly from https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android )
