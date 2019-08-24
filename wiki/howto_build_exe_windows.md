@@ -38,7 +38,7 @@ pyinstaller.exe YourGuyApp.py --noupx --onefile --noconsole  --add-data="static;
 ```
 
 Notes:
-
+    - your exe will be bigger (60mo min)
     - `noupx` : because, with upx it gives me errors ;-)
     - `onefile` : to embed all needed runtime files.
     - `noconsole` : like you want ...

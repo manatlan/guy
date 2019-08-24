@@ -9,6 +9,10 @@ import os,sys,re,traceback
 # https://github.com/manatlan/guy
 # #############################################################################
 
+#python3 -m pytest --cov-report html --cov=guy .
+
+
+
 #TODO:
 # cookiejar
 
@@ -84,9 +88,9 @@ def serialize(obj):
 
 def unserialize(obj):
     if type(obj) == str:
-        if re.search("^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+Z$", obj):
+        if re.search(r"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+Z$", obj):
             return datetime.strptime(obj, "%Y-%m-%dT%H:%M:%S.%fZ")
-        elif re.search("^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$", obj):
+        elif re.search(r"^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$", obj):
             return datetime.strptime(obj, "%Y-%m-%dT%H:%M:%SZ")
     elif type(obj) == list:
         return [unserialize(i) for i in obj]
@@ -359,7 +363,7 @@ class ChromeApp:
             if tempfile.gettempdir():
                 args.append(
                     "--user-data-dir=%s"
-                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub("[^\w\d]","_",url))
+                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^\w\d]","_",url))
                 )
             log("CHROME APP-MODE:",args)
             self.__instance = subprocess.Popen(args)
