@@ -474,7 +474,7 @@ class Guy:
         #~ self._routes["_cfg_set"]=self._cfg_set
         self._routes["exit"]=self.exit
 
-    def run(self):
+    def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
         if "android" in sys.executable: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
@@ -501,7 +501,7 @@ class Guy:
 
         return self
 
-    def runCef(self):
+    def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self )
@@ -518,7 +518,7 @@ class Guy:
         return self
 
 
-    def server(self,port=8000):
+    def server(self,port=8000,log=False):
         """ Run the guy's app for multiple clients (web mode) """
         os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self ,"0.0.0.0",port=port )
@@ -663,11 +663,8 @@ var guy={
                     this.removeEventListener('guy-'+cmd.uuid, handler);
                     var x=x.detail;
                     if(x && x.result!==undefined) {
-                        if(x.script) {
-                            var r=eval(x.script)
-                            console.log("EVAL",r)
-                            resolve( r )
-                        }
+                        if(x.script)
+                            resolve( eval(x.script) )
                         else
                             resolve(x.result)
                     }
@@ -767,10 +764,10 @@ var self={};
             id,method = method.split(".")
             for i in self._children.values():
                 if i._id == id:
-                    print("METHOD CHILD",i._name,method)
+                    log("METHOD CHILD",i._name,method)
                     function=i._routes[method]
         else:
-            print("METHOD SELF",method)
+            log("METHOD SELF",method)
             function=self._routes[method]
         return function
 
