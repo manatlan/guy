@@ -15,6 +15,7 @@ import os,sys,re,traceback
 __version__="0.3"
 """
 changelog 0.3:
+    - manage ctrl-c
     - better runner detection in android/kivy
     - .server(port=8000) : can set a specific port in server mode, else 8000
     - refacto ws.on_message
@@ -211,8 +212,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         log("WS RECEPT:",o)
         method,args,uuid = o["command"],o["args"],o["uuid"]
 
-        if o["command"] == "emit":
-            event, *args = o["args"]
+        if method == "emit":
+            event, *args = args
             await wsBroadcast( event=event, args=args )
         else:
             async def execution(function, uuid,mode):
@@ -231,7 +232,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                     r = dict(error="task cancelled", uuid=uuid)
                 except Exception as e:
                     r = dict(error=str(e), uuid=uuid)
-                    print("=" * 40, "in ", o["command"],mode)
+                    print("=" * 40, "in ", method, mode)
                     print(traceback.format_exc().strip())
                     print("=" * 40)
                 log(">>> (%s)"%mode,r)
@@ -490,7 +491,11 @@ class Guy:
                 app.exit()
 
             self.callbackExit = exit
-            app.wait() # block
+            try:
+                app.wait() # block
+            except KeyboardInterrupt:
+                print("-Process stopped")
+
             ws.exit()
             ws.join()
 
@@ -504,7 +509,10 @@ class Guy:
 
         app=ChromeAppCef(ws.startPage,self.size)
         self.callbackExit = app.exit
-        app.wait() # block
+        try:
+            app.wait() # block
+        except KeyboardInterrupt:
+            print("-Process stopped")
         ws.exit()
         ws.join()
         return self
@@ -528,7 +536,11 @@ class Guy:
         except:
             pass
 
-        ws.join() #important !
+        try:
+            ws.join() #important !
+        except KeyboardInterrupt:
+            print("-Process stopped")
+        ws.exit()
         return self
 
     def exit(self):
@@ -549,7 +561,7 @@ class Guy:
 
 
     def _renderJs(self):
-        if self.size and self.size!=FULLSCREEN:
+        if self.size and self.size is not FULLSCREEN:
             size=self.size
         else:
             size=None
@@ -750,6 +762,7 @@ var self={};
         await wsBroadcast(event=event, args=args)
 
     def _getRoutage(self,method):
+        function=None
         if "." in method:
             id,method = method.split(".")
             for i in self._children.values():
