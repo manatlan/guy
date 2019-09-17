@@ -621,7 +621,7 @@ class Guy:
         except KeyboardInterrupt:
             print("-Process stopped")
         ws.exit()
-        return self._runned #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
+        return self._runned #TODO: webrtc_event_logstechnically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
         if self.callbackExit: self.callbackExit()
