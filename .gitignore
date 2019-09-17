@@ -112,3 +112,5 @@ __pycache__/guy.cpython-37.pyc
 .pytest_cache/*/*
 .pytest_cache/*/*/*
 .pytest_cache/*/*/*/*
+webrtc_event_logs/
+.pytest_cache/v/cache/nodeids
