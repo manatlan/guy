@@ -4,15 +4,15 @@ from guy import Guy,FULLSCREEN
 import asyncio,datetime
 
 class Minipy(Guy):
-    size=(300,20)
-    txt=" 3 * '#' "
+    size=(300,200)
+    txt="3 * '#'"
     __doc__="""
 <style>
 div#back form {display:inline}
 </style>
 <script>
 async function test(txt) {
-    document.body.innerHTML += await self.post( txt )
+    document.querySelector("#r").innerHTML = await self.post( txt )
 }
 </script>
 <div id='back'>
@@ -26,11 +26,11 @@ async function test(txt) {
 <script>
 document.querySelector("#n").focus()
 </script>
-    """
+<div id=r></div>"""
 
     def post(self,txt):
         try:
-           return exec(txt, globals(), locals())
+           return eval(txt, globals(), locals())
         except Exception as e:
            return "error:%s"%e
 
