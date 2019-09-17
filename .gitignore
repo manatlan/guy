@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
+__pycache__/
 __pycache__/*
 *.py[cod]
+*.pyc
 *$py.class
 reqman.html
 pip-wheel-metadata/
@@ -114,3 +116,4 @@ __pycache__/guy.cpython-37.pyc
 .pytest_cache/*/*/*/*
 webrtc_event_logs/
 .pytest_cache/v/cache/nodeids
+__pycache__/guy.cpython-37.pyc
