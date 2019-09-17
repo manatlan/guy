@@ -7,6 +7,9 @@
     "python.formatting.provider": "black",
     "python.testing.pytestArgs": [
         "tests"
-    ]
+    ],
+    "files.watcherExclude": {
+        "**/.buildozer/**": true,
+    }
 }
 

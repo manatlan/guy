@@ -1,21 +1,15 @@
 [
   "tests/test_emits.py::test_emits[run]",
   "tests/test_emits.py::test_emits[runCef]",
-  "tests/test_emits.py::test_emits[server]",
   "tests/test_init.py::test_init[run]",
   "tests/test_init.py::test_init[runCef]",
-  "tests/test_init.py::test_init[server]",
   "tests/test_json.py::test_json",
   "tests/test_multiple_runs.py::test_doubleRun_sameInstance[run]",
   "tests/test_multiple_runs.py::test_doubleRun_sameInstance[runCef]",
-  "tests/test_multiple_runs.py::test_doubleRun_sameInstance[server]",
   "tests/test_templating.py::test_templateSubstitution[run]",
   "tests/test_templating.py::test_templateSubstitution[runCef]",
-  "tests/test_templating.py::test_templateSubstitution[server]",
   "tests/test_windows.py::test_exit_direct[run]",
   "tests/test_windows.py::test_exit_direct[runCef]",
-  "tests/test_windows.py::test_exit_direct[server]",
   "tests/test_windows.py::test_wait_exit[run]",
-  "tests/test_windows.py::test_wait_exit[runCef]",
-  "tests/test_windows.py::test_wait_exit[server]"
+  "tests/test_windows.py::test_wait_exit[runCef]"
 ]

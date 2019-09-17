@@ -24,13 +24,13 @@ def test_emits(runner):
 
         </script>
         """
-        async def makeEmits(self,emitMe):
+        async def makeEmits(self):
             await self.emit("hello","D")      # emit all clients
-            await emitMe("hello","E")         # emit ME only
-            await emitMe("end")               # emit ME only and finnish the test
+            await self.emitMe("hello","E")         # emit ME only
+            await self.emitMe("end")               # emit ME only and finnish the test
         def endtest(self,word):
             self.word=word
             self.exit()
     t=T()
-    runner(t)
-    assert t.word=="ABCDE"
+    r=runner(t)
+    assert r.word=="ABCDE"

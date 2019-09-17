@@ -184,22 +184,8 @@ document.addEventListener("contextmenu", function (e) {
         return Spinner()
 
 if __name__ == "__main__":
-
-    #~ x=MsgBox("Juste un test pour voir si ca marche toujours ;-)")
-    #~ x.run()
-
-
-    #~ x=Confirm("Quit?")
-    #~ x.run()
-    #~ print( x.ret )
-
-    #~ x=Prompt("Name ?","kiki")
-    #~ x.run()
-    #~ print( x.ret )
-
     x=Win()
-    #~ x.runCef()
-    x.run(True)
-    #~ x.server()
+    x.run()
+
 
 

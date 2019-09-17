@@ -20,5 +20,5 @@ def test_templateSubstitution(runner):
             self.somme = a+b
             self.exit()
     t=T()
-    runner(t)
-    assert t.somme == 87
+    r=runner(t)
+    assert r.somme == 87

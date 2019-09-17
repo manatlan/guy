@@ -13,8 +13,8 @@ guy.on("view",function(a,b) {
 })
 
 </script>
-<button onclick="self.emitMe('view',42,43)">emit</button>
-<button onclick="self.emit  ('view',42,43)">emit glob</button>
+<button onclick="guy.emitMe('view',42,43)">emit</button>
+<button onclick="guy.emit  ('view',42,43)">emit glob</button>
 <hr/>
     """
 

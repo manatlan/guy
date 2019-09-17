@@ -5,7 +5,7 @@ title = guydemo
 package.name = com.manatlan
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = guydemo
+package.domain = guydemo2
 
 # (str) Source code where the main.py live
 source.dir = .

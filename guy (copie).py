@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import os,sys,re,traceback,copy,types
+import os,sys,re,traceback
 # #############################################################################
 #    Copyright (C) 2019 manatlan manatlan[at]gmail(dot)com
 #
@@ -19,8 +19,6 @@ import os,sys,re,traceback,copy,types
 __version__="0.3"
 """
 changelog 0.3:
-    - reactive property client side
-    - clone server instance at each socket
     - on android : save the cfg in a persistant storage (can reinstall without loose)
     - runner accept a log parameter, default to False
     - manage ctrl-c
@@ -190,36 +188,34 @@ class ProxyHandler(tornado.web.RequestHandler):
 
 
 async def sockwrite(wsock, **kwargs ):
-    if wsock:
-        try:
-            await wsock.write_message(jDumps(kwargs))
-        except Exception as e:
-            print("Socket write : can't")
+    try:
+        await wsock.write_message(jDumps(kwargs))
+    except Exception as e:
+        print("Socket write : can't")
 
 
 async def wsBroadcast(event,args):
     log(">>> Emit ALL:",event,args)
-    for i in WebSocketHandler.clients.keys():
+    for i in WebSocketHandler.clients:
         await sockwrite(i,event=event,args=args)
 
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
-    clients={}
+    clients=[]
 
     def initialize(self, instance):
         self.instance=instance
 
     def open(self):
-        new=self.instance._initCopy( self )
+        WebSocketHandler.clients.append(self)
 
-        WebSocketHandler.clients[self]=new
+        if hasattr(self.instance,"init"):
+            self.instance.init(self.instance)
 
     def on_close(self):
-        del WebSocketHandler.clients[self]
+        WebSocketHandler.clients.remove(self)
 
     async def on_message(self, message):
-
-        instance = WebSocketHandler.clients[self]
 
         o = jLoads(message)
         log("WS RECEPT:",o)
@@ -251,18 +247,18 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                 log(">>> (%s)"%mode,r)
                 await sockwrite(self,**r)
 
-            fct=instance._getRoutage(method)
+            fct=self.instance._getRoutage(method)
 
             if asyncio.iscoroutinefunction( fct ):
 
                 async def function():
-                    return await instance(method,*args)
+                    return await self.instance(self,method,*args)
 
                 asyncio.create_task( execution( function, uuid, "ASYNC") )
 
             else:
                 async def function():
-                    return instance(method,*args)
+                    return self.instance(self,method,*args)
 
                 await execution( function, uuid, "SYNC" )
 
@@ -469,51 +465,23 @@ class ChromeAppCef:
         self.__instance.Shutdown()
 
 class Guy:
-    _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
-    _runned=None    # (only the main instance set this)
     _children={}
-
     size=None
     def __init__(self,*a,**k):
         self._name = self.__class__.__name__
         self._id=self._name+"-"+uuid.uuid4().hex
         self.callbackExit=None      #public callback when "exit"
+        self._routes = {
+            n: v
+            for n, v in inspect.getmembers(self, inspect.ismethod) if not n.startswith("_")
+            #~ if not v.__func__.__qualname__.startswith(("Window."))
+        }
+        for kw in ["init","cfg","fetch","run","runCef","server","on","log","emit","emitMe","exit","parent"]:
+            if kw in self._routes: del self._routes[kw]
 
-        self._routes={}
-        for n, v in inspect.getmembers(self, inspect.ismethod):
-            if not v.__func__.__qualname__.startswith("Guy."):
-                if n not in ["init","__init__"]:
-                    if n in dir(Guy): raise Exception("Can't set route '%s' (existing keyword))"%n)
-                    self._routes[n]=v
-
-        # guy's inner routes
-        self._routes["cfg_get"]=self.cfg_get
-        self._routes["cfg_set"]=self.cfg_set
-        self._routes["prop_set"]=self.prop_set
+        #~ self._routes["_cfg_get"]=self._cfg_get
+        #~ self._routes["_cfg_set"]=self._cfg_set
         self._routes["exit"]=self.exit
-
-
-    def _initCopy(self,wsock):
-
-        print("CLONE",self._name)
-        keys=self._routes.keys()
-        self._routes={}
-        new = copy.copy(self)
-        for n, v in inspect.getmembers(new):
-            if n in keys:
-                if inspect.isfunction(v):
-                    new._routes[n]=types.MethodType( v, new )
-                else:
-                    new._routes[n]=v
-
-        new._wsock = wsock
-        self._runned = new
-
-        if hasattr(new,"init"):
-            new.init(new)
-        asyncio.ensure_future(new.emitMe("_prop_set_all",new._dict))
-        return new
-
 
     def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
@@ -542,7 +510,7 @@ class Guy:
             ws.exit()
             ws.join()
 
-        return self._runned
+        return self
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
@@ -561,7 +529,7 @@ class Guy:
             print("-Process stopped")
         ws.exit()
         ws.join()
-        return self._runned
+        return self
 
 
     def server(self,port=8000,log=False):
@@ -590,26 +558,13 @@ class Guy:
         except KeyboardInterrupt:
             print("-Process stopped")
         ws.exit()
-        return None #technically multiple cloned instances can have be runned (which one is the state ?)
+        return self
 
     def exit(self):
         if self.callbackExit: self.callbackExit()
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
-
-    def prop_set(self, key, value):
-        #~ if key in dir(Guy): raise Exception("Can't set prop '%s' (existing keyword))"%key)
-        log("client set self.%s=%s"%(key,value))
-        super().__setattr__(key, value)
-
-    def __setattr__(self,k,v):
-        #~ if k in dir(Guy): raise Exception("Can't set prop '%s' (existing keyword))"%k)
-        super().__setattr__(k, v)
-        if self._wsock and k[0]!="_":
-            log("server set self.%s=%s"%(k,v))
-            asyncio.ensure_future( self.emitMe("_prop_set",k,v))
-
 
     @property
     def cfg(self):
@@ -637,8 +592,6 @@ class Guy:
             size=self.size
         else:
             size=None
-        routes=[k for k,v in self._routes.items() if not v.__func__.__qualname__.startswith("Guy.")]
-        log("ROUTES:",routes)
         js = """
 document.addEventListener("DOMContentLoaded", function(event) {
     %s
@@ -816,83 +769,25 @@ var guy={
 
 };
 
-var self = new Proxy({
-      _pool:{},
-      _prop_set:(k,v)=>{
-            self._pool[k]=v;
+var self={};
 
-            document.querySelectorAll("[self='"+k+"']").forEach( tag => {
-                switch(tag.tagName) {
-                    case "TEXTAREA":
-                    case "INPUT":
-                        tag.value = v;
-                        break;
-                    default:
-                        tag.innerText = v;
-                }
-            })
-
-      },
-      _initReactive:()=>{
-        guy.log("INIT REACTIVE")
-
-        document.querySelectorAll("[self]").forEach( tag => {
-            switch(tag.tagName) {
-                case "TEXTAREA":
-                case "INPUT":
-                    tag.onkeyup = function(e) {
-                        var prop=tag.getAttribute("self")
-                        self[prop]=e.target.value;
-                    }
-                    tag.onchange = tag.onkeyup
-                    break;
-            }
-        })
-
-      },
-      %s
-
-  },{
-      get: (obj, prop) => {
-        if(prop in obj)
-            return obj[prop]
-        else if(prop in obj._pool)
-            return obj._pool[prop]
-      },
-      set: (obj, prop, value) => {
-        obj._prop_set(prop,value)
-        guy._call("prop_set",[prop,value])
-      },
-})
-
-guy.on("_prop_set_all",function(d) {
-    for(var k in d)
-        self._prop_set(k,d[k])
-    self._initReactive( )
-})
-
-guy.on("_prop_set",function(k,v) {
-    self._prop_set( k,v )
-})
 
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
-        "true" if LOG else "false",
-        "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, k) for k in routes])
+        "true" if LOG else "false"
     )
 
+        for k in self._routes.keys():
+            if k in ["cfg_get","cfg_set"]: continue
+            js += (
+                """\nself.%s=function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )};"""
+                % (k, k)
+            )
         return js
 
     async def emit(self, event, *args):
         await wsBroadcast(event=event, args=args)
-
-    async def emitMe(self,event, *args):
-        log(">>> emitMe",event,args)
-        try:
-            await sockwrite(self._wsock,event=event,args=args)
-        except Exception as e:
-            print("Socket write : can't")
 
     def _getRoutage(self,method):
         function=None
@@ -907,11 +802,22 @@ guy.on("_prop_set",function(k,v) {
             function=self._routes[method]
         return function
 
-    def __call__(self,method,*args):
+    def __call__(self,wsock,method,*args):  #TODO: remove unused wsock
+
+        async def emitMe(event, *args):
+            log(">>> emitMe",event,args)
+            try:
+                await sockwrite(wsock,event=event,args=args)
+            except Exception as e:
+                print("Socket write : can't")
 
         function = self._getRoutage(method)
 
-        ret= function(*args)
+        x=inspect.signature(function )
+        if "emitMe" in x.parameters:
+            ret= function(*args,**dict(emitMe=emitMe))
+        else:
+            ret= function(*args)
 
         if isinstance(ret,Guy):
             ################################################################
@@ -923,7 +829,7 @@ guy.on("_prop_set",function(k,v) {
             eventExit="event-"+o._id+".exit"
             def exit():
                 log("USE %s: EXIT" % o._name,o._json)
-                asyncio.create_task(self.emitMe(eventExit,o._json))
+                asyncio.create_task(emitMe(eventExit,o._json))
 
             html=o._render(GETPATH(),includeGuyJs=False)
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
@@ -978,16 +884,12 @@ guy.on("_prop_set",function(k,v) {
                 return "ERROR: can't find '%s'" % f
 
     @property
-    def _dict(self):
+    def _json(self):
+        """ return a json representation of the inner attributs of this"""
         obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
         for i in ["callbackExit","__doc__","_children","size"]:
             if i in obj: del obj[i]
-        return obj
-
-    @property
-    def _json(self):
-        """ return a json representation of the inner attributs of this"""
-        return jDumps(self._dict)
+        return jDumps(obj)
 
 
 def runAndroid(ga):
@@ -1054,40 +956,7 @@ def runAndroid(ga):
 if __name__ == "__main__":
 
     #~ from testTordu import Tordu as GuyApp
-    # from testPrompt import Win as GuyApp
-    # GuyApp().run()
+    from testPrompt import Win as GuyApp
+    GuyApp().run()
     #~ GuyApp().server(8000)
 
-    class T(Guy):
-        __doc__="""
-        <script>
-        var word="";
-
-        guy.on( "hello", async function(letter) {
-            word+=letter;
-        })
-
-        guy.on( "end", async function() {
-            await self.endtest(word)
-        })
-
-        guy.init( async function() {
-            guy.emitMe("hello","B")     // avoid socket, but it counts
-            guy.emit("hello","C")       // emit all clients
-            await self.makeEmits()       // generate server emits
-        })
-
-        guy.emitMe("hello","A")         // avoid socket, so can be run before init
-
-        </script>
-        """
-        async def makeEmits(self):
-            await self.emit("hello","D")      # emit all clients
-            await self.emitMe("hello","E")         # emit ME only
-            await self.emitMe("end")               # emit ME only and finnish the test
-        def endtest(self,word):
-            self.word=word
-            self.exit()
-    t=T()
-    r=t.runCef()
-    assert r.word=="ABCDE"

@@ -21,6 +21,6 @@ def test_init(runner):
         def __del__(self):
             self.word+="D"  # will be ignored (but perhaps in future ?!)
     t=T()
-    runner(t)
-    assert t.word=="ABC"
+    r=runner(t)
+    assert r.word=="ABC"
 

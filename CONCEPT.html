@@ -1,0 +1,54 @@
+<a self="txt"></a>
+<textarea self="txt"></textarea>
+<input self="txt"/>
+<input self="txt"/>
+
+<input type="text" self="chk"/>
+<input type="number" self="chk"/>
+
+<script>
+var self = new Proxy({
+      _pool:{},
+      init:()=>{
+        document.querySelectorAll("[self]").forEach( tag => {
+            switch(tag.tagName) {
+                case "TEXTAREA":
+                case "INPUT":
+                    tag.onkeyup = function(e) {
+                        var prop=tag.getAttribute("self")
+                        self[prop]=e.target.value;
+                    }
+                    tag.onchange = function(e) {
+                        var prop=tag.getAttribute("self")
+                        self[prop]=e.target.value;
+                    }
+                    break;
+            }
+        })
+
+      },
+      toto:function() {console.log("toto")},
+
+  },{
+      get: (obj, prop) => {
+        if(prop in obj) return obj[prop]
+        else
+        if(prop in obj._pool) return obj._pool[prop]
+      },
+      set: (obj, prop, value) => {
+        obj._pool[prop]=value
+        document.querySelectorAll("[self]").forEach( tag => {
+            if(tag.getAttribute("self")==prop)
+                switch(tag.tagName) {
+                    case "TEXTAREA":
+                    case "INPUT":
+                        tag.value = value;
+                        break;
+                    default:
+                        tag.innerText = value;
+                }
+        })
+      },
+})
+self.init()
+</script>

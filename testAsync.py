@@ -25,7 +25,7 @@ function rep(x) {
         return "long"
 
     async def doASyncLong(self):    # run asynchro !!! (it doesn't hang the UI !)
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         return "async long"
 
 if __name__=="__main__":

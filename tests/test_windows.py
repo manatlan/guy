@@ -21,8 +21,8 @@ def test_exit_direct(runner):
             self.ok=True
             self.exit()
     t=T()
-    runner(t)
-    assert t.ok
+    r=runner(t)
+    assert r.ok
 
 def test_wait_exit(runner):
     class TT(Guy):
@@ -46,5 +46,5 @@ def test_wait_exit(runner):
             self.ok=value
             self.exit()
     t=T()
-    runner(t)
-    assert t.ok
+    r=runner(t)
+    assert r.ok

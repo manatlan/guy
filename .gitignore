@@ -106,3 +106,4 @@ config.json
 __pycache__/guy.cpython-37.pyc
 android/.buildozer
 android/bin/
+tests/__pycache__/

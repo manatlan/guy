@@ -9,9 +9,9 @@ def test_doubleRun_sameInstance(runner):
             self.exit()
 
     t=T()
-    runner(t)
-    assert t.ok
+    r=runner(t)
+    assert r.ok
     t.ok=False
-    runner(t)
-    assert t.ok
+    r=runner(t)
+    assert r.ok
 
