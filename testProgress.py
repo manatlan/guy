@@ -52,4 +52,4 @@ body {background: #EEE}
 if __name__=="__main__":
     d=progress()
     #~ d.run()
-    d.server()
+    d.serve()

@@ -3,6 +3,7 @@ import guy,os
 import vbuild # vbuild>=0.8.1 !!!!!!
 
 class VueApp(guy.Guy):
+    size=(400,200)
 
     def _render(self,path): #here is the magic
         # this method is overrided, so you can render what you want

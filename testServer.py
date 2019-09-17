@@ -17,4 +17,4 @@ guy.on( "tchat", function(x) {
 
 
 if __name__ == "__main__":
-    Server().server()
+    Server().serve()

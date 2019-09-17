@@ -22,7 +22,7 @@ changelog 0.3.1:
     - MULTI PAGE, via children (useful in server mode !!!)
     - GLOBAL STATIC FOLDER VAR
     - remove js (=>) incompatibility for ie11
-    
+
 changelog 0.3:
     - reactive property client side
     - clone server instance at each socket
@@ -187,7 +187,7 @@ class MainHandler(tornado.web.RequestHandler):
                 return self.write(chpage._render( GETPATH() ))
             else:
                 raise tornado.web.HTTPError(status_code=404)
-            
+
     #~ async def get(self):
         #~ self.write(self.instance._render( GETPATH() ))
 
@@ -513,7 +513,8 @@ class Guy:
         for n, v in inspect.getmembers(self, inspect.ismethod):
             if not v.__func__.__qualname__.startswith("Guy."):
                 if n not in ["init","__init__"]:
-                    if n in dir(Guy): raise Exception("Can't set route '%s' (existing keyword))"%n)
+                    if n!="_render":
+                        if n in dir(Guy): raise Exception("Can't set route '%s' (existing keyword))"%n)
                     self._routes[n]=v
 
         # guy's inner routes
@@ -540,7 +541,7 @@ class Guy:
 
         if hasattr(new,"init"):
             new.init(new)
-            
+
         ## for k,v in new._dict.items():
             ## asyncio.ensure_future(new.emitMe("_prop_set",k,v))
         return new
@@ -843,7 +844,7 @@ var guy={
         }
 
         if(o.scripts) eval(o.scripts)
-        
+
         //return reactivity(self._div,self)
         return self;
     },
@@ -875,7 +876,7 @@ function reactivity(root, o)  {
             }
         })
     };
-    
+
     // proxify the original o --> oo
     var oo=new Proxy( o,{
           get: (obj, prop) => {
@@ -889,8 +890,8 @@ function reactivity(root, o)  {
             guy._call("prop_set",[prop,value])
           },
     })
-    
-    // make reactive tag on root 
+
+    // make reactive tag on root
     root.querySelectorAll("[self]").forEach( tag => {
         switch(tag.tagName) {
             case "TEXTAREA":
