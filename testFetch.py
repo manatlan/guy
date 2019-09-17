@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
 import guy
 
 # call a http service during an async rpc method call

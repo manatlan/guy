@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from guy import Guy,FULLSCREEN
 import asyncio,datetime

@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/usr/bin/env python3
 import guy,os
 import vbuild # vbuild>=0.8.1 !!!!!!
 
