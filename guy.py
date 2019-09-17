@@ -16,8 +16,13 @@ import os,sys,re,traceback,copy,types
 #TODO:
 # cookiejar
 
-__version__="0.3"
+__version__="0.3.1"
 """
+changelog 0.3.1:
+    - MULTI PAGE, via children (useful in server mode !!!)
+    - GLOBAL STATIC FOLDER VAR
+    - remove js (=>) incompatibility for ie11
+    
 changelog 0.3:
     - reactive property client side
     - clone server instance at each socket
@@ -58,6 +63,7 @@ import uuid
 class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
 LOG=None
+FOLDERSTATIC="static"
 
 GETPATH=os.getcwd
 if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
@@ -146,14 +152,44 @@ class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
     async def get(self):
-        self.write(self.instance._renderJs())
+        referer=self.request.headers.get("referer",None)
+        if referer is None: raise Exception("BROWSER NEED REFERER, ELSE GUY WONT WORK !") #TODO: watch this!
+        page=referer.split("/")[-1]
+        if page=="" or page==self.instance._name:
+            log("GuyJSHandler: Render Main guy.js",self.instance._name)
+            self.write(self.instance._renderJs())
+        else:
+            chpage=self.instance._children.get(page,None)
+            if chpage is not None:
+                log("GuyJSHandler: Render Children guy.js",page)
+                self.write(chpage._renderJs(asChild=True))
+            else:
+                raise tornado.web.HTTPError(status_code=404)
 
 class MainHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
-    #~ async def get(self,page):
-    async def get(self):
-        self.write(self.instance._render( GETPATH() ))
+    async def get(self,page): # page doesn't contains a dot '.'
+        if page=="" or page==self.instance._name:
+            log("MainHandler: Render Main Instance",self.instance._name)
+            self.write(self.instance._render( GETPATH() ))
+        else:
+            chpage=self.instance._children.get(page,None)
+            if chpage is None:
+                declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
+                gclass=declared.get(page,None)
+                if gclass: # auto instanciate !
+                    log("MainHandler: Auto instanciate",page)
+                    self.instance._children[page]=gclass()
+                    chpage=self.instance._children.get(page,None)
+            if chpage:
+                log("MainHandler: Render Children",page)
+                return self.write(chpage._render( GETPATH() ))
+            else:
+                raise tornado.web.HTTPError(status_code=404)
+            
+    #~ async def get(self):
+        #~ self.write(self.instance._render( GETPATH() ))
 
 class ProxyHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
@@ -266,16 +302,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
                 await execution( function, uuid, "SYNC" )
 
-
-
-
     def check_origin(self, origin):
         return True
 
 
-
-# the webserver is ran on a separated thread
-class WebServer(Thread):
+class WebServer(Thread): # the webserver is ran on a separated thread
     port = 39000
     def __init__(self,instance,host="localhost",port=None):
         super(WebServer, self).__init__()
@@ -298,9 +329,8 @@ class WebServer(Thread):
             (r'/ws',            WebSocketHandler,dict(instance=self.instance)),
             (r'/guy.js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/_/(?P<url>.+)', ProxyHandler,dict(instance=self.instance)),
-            #~ (r'/(?P<page>.*)',  MainHandler,dict(instance=self.instance)),
-            (r'/',  MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': GETPATH()+"/static/"})
+            (r'/(?P<page>[^\\.]*)',  MainHandler,dict(instance=self.instance)),
+            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( GETPATH(), FOLDERSTATIC) })
         ])
         app.listen(self.port,address=self.host)
 
@@ -489,20 +519,19 @@ class Guy:
         # guy's inner routes
         self._routes["cfg_get"]=self.cfg_get
         self._routes["cfg_set"]=self.cfg_set
-        self._routes["prop_set"]=self.prop_set
+        ## self._routes["prop_set"]=self.prop_set
         self._routes["exit"]=self.exit
 
 
     def _initCopy(self,wsock):
-
-        print("CLONE",self._name)
+        log("CLONE",self._name)
         keys=self._routes.keys()
         self._routes={}
         new = copy.copy(self)
         for n, v in inspect.getmembers(new):
             if n in keys:
                 if inspect.isfunction(v):
-                    new._routes[n]=types.MethodType( v, new )
+                    new._routes[n]=types.MethodType( v, new ) #rebound !
                 else:
                     new._routes[n]=v
 
@@ -511,7 +540,9 @@ class Guy:
 
         if hasattr(new,"init"):
             new.init(new)
-        asyncio.ensure_future(new.emitMe("_prop_set_all",new._dict))
+            
+        ## for k,v in new._dict.items():
+            ## asyncio.ensure_future(new.emitMe("_prop_set",k,v))
         return new
 
 
@@ -564,8 +595,8 @@ class Guy:
         return self._runned
 
 
-    def server(self,port=8000,log=False):
-        """ Run the guy's app for multiple clients (web mode) """
+    def serve(self,port=8000,log=False):
+        """ Run the guy's app for multiple clients (web/server mode) """
         global LOG
         LOG=log
 
@@ -598,6 +629,7 @@ class Guy:
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
 
+    """
     def prop_set(self, key, value):
         #~ if key in dir(Guy): raise Exception("Can't set prop '%s' (existing keyword))"%key)
         log("client set self.%s=%s"%(key,value))
@@ -609,7 +641,7 @@ class Guy:
         if self._wsock and k[0]!="_":
             log("server set self.%s=%s"%(k,v))
             asyncio.ensure_future( self.emitMe("_prop_set",k,v))
-
+    """
 
     @property
     def cfg(self):
@@ -632,7 +664,7 @@ class Guy:
         return Proxy()
 
 
-    def _renderJs(self):
+    def _renderJs(self,asChild=False):
         if self.size and self.size is not FULLSCREEN:
             size=self.size
         else:
@@ -691,7 +723,7 @@ var guy={
             var args=Array.prototype.slice.call(arguments)
             args.unshift("--")
 
-            console.log.apply(console.log,args.map(x => x==null?"NULL":x));
+            console.log.apply(console.log,args.map( function(x) {return x==null?"NULL":x}));
         }
     },
     _ws: setupWS( function(ws){guy._ws = ws; document.dispatchEvent( new CustomEvent("init") )} ),
@@ -769,10 +801,10 @@ var guy={
         return fetch( "/_/"+url,newObj )
     },
     cfg: new Proxy({}, {
-      get: (obj, prop) => {
+      get: function (obj, prop) {
         return guy._call("cfg_get",[prop])
       },
-      set: (obj, prop, value) => {
+      set: function (obj, prop, value) {
         return guy._call("cfg_set",[prop,value]);
       },
     }),
@@ -811,75 +843,87 @@ var guy={
         }
 
         if(o.scripts) eval(o.scripts)
+        
+        //return reactivity(self._div,self)
         return self;
     },
 
 };
 
-var self = new Proxy({
-      _pool:{},
-      _prop_set:(k,v)=>{
-            self._pool[k]=v;
 
-            document.querySelectorAll("[self='"+k+"']").forEach( tag => {
-                switch(tag.tagName) {
-                    case "TEXTAREA":
-                    case "INPUT":
-                        tag.value = v;
-                        break;
-                    default:
-                        tag.innerText = v;
-                }
-            })
+var self= {
+  exit:function() {guy.exit()},
+  %s
+};
 
-      },
-      _initReactive:()=>{
-        guy.log("INIT REACTIVE")
+/*
 
-        document.querySelectorAll("[self]").forEach( tag => {
+function reactivity(root, o)  {
+
+    // add specific attributes/methods
+    o._pool={};
+    o._prop_set=(k,v)=>{
+        o._pool[k]=v;
+        root.querySelectorAll("[self='"+k+"']").forEach( tag => {
             switch(tag.tagName) {
                 case "TEXTAREA":
                 case "INPUT":
-                    tag.onkeyup = function(e) {
-                        var prop=tag.getAttribute("self")
-                        self[prop]=e.target.value;
-                    }
-                    tag.onchange = tag.onkeyup
+                    tag.value = v;
                     break;
+                default:
+                    tag.innerText = v;
             }
         })
+    };
+    
+    // proxify the original o --> oo
+    var oo=new Proxy( o,{
+          get: (obj, prop) => {
+            if(prop in obj)
+                return obj[prop]
+            else if(prop in obj._pool)
+                return obj._pool[prop]
+          },
+          set: (obj, prop, value) => {
+            obj._prop_set(prop,value)
+            guy._call("prop_set",[prop,value])
+          },
+    })
+    
+    // make reactive tag on root 
+    root.querySelectorAll("[self]").forEach( tag => {
+        switch(tag.tagName) {
+            case "TEXTAREA":
+            case "INPUT":
+                tag.onkeyup = function(e) {
+                    var prop=tag.getAttribute("self")
+                    oo[prop]=e.target.value;
+                }
+                tag.onchange = tag.onkeyup
+                break;
+        }
+    })
 
-      },
-      %s
+    // and connect server event
+    guy.on("_prop_set",function(k,v) {
+        o._prop_set( k,v )
+    })
 
-  },{
-      get: (obj, prop) => {
-        if(prop in obj)
-            return obj[prop]
-        else if(prop in obj._pool)
-            return obj._pool[prop]
-      },
-      set: (obj, prop, value) => {
-        obj._prop_set(prop,value)
-        guy._call("prop_set",[prop,value])
-      },
-})
+    return oo;
+}
 
-guy.on("_prop_set_all",function(d) {
-    for(var k in d)
-        self._prop_set(k,d[k])
-    self._initReactive( )
-})
+    document.addEventListener("DOMContentLoaded", function(event) {
+        self=reactivity(document,self);
+    },true)
+*/
 
-guy.on("_prop_set",function(k,v) {
-    self._prop_set( k,v )
-})
+
 
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
         "true" if LOG else "false",
-        "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, k) for k in routes])
+        "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
 
         return js
@@ -929,7 +973,7 @@ guy.on("_prop_set",function(k,v) {
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o.callbackExit=exit
-            if hasattr(o,"init"): o("init")
+            if hasattr(o,"init"): o.init(o)
             obj=dict(
                 id=o._id,
                 name=o._name,
@@ -945,11 +989,7 @@ guy.on("_prop_set",function(k,v) {
 
         return ret
 
-    def _render(self,path,includeGuyJs=True,page=None):
-        #~ chpages=[i for i in self.children if i.__class__.__name__==page]
-        #~ if chpages:
-            #~ return chpages[0]._render(path=path,includeGuyJs=includeGuyJs,page=None)
-        #~ else:
+    def _render(self,path,includeGuyJs=True):
         html=self.__doc__
 
         def rep(x):
@@ -970,7 +1010,7 @@ guy.on("_prop_set",function(k,v) {
             if includeGuyJs: html="""<script src="guy.js"></script>"""+ html
             return rep(html)
         else:
-            f=os.path.join(path,"static","%s.html" % self._name)
+            f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
             if os.path.isfile(f):
                 with open(f,"r") as fid:
                     return rep(fid.read())
