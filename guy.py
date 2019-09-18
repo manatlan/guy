@@ -16,8 +16,11 @@ import os,sys,re,traceback,copy,types
 #TODO:
 # cookiejar
 
-__version__="0.3.1"
+__version__="0.3.2"
 """
+changelog 0.3.2:
+    - jshandler: remove queryparams from referer
+    
 changelog 0.3.1:
     - MULTI PAGE, via children (useful in server mode !!!)
     - GLOBAL STATIC FOLDER VAR
@@ -155,6 +158,7 @@ class GuyJSHandler(tornado.web.RequestHandler):
         referer=self.request.headers.get("referer",None)
         if referer is None: raise Exception("BROWSER NEED REFERER, ELSE GUY WONT WORK !") #TODO: watch this!
         page=referer.split("/")[-1]
+        page=page.split("?")[0] # remove queryparams from referer
         if page=="" or page==self.instance._name:
             log("GuyJSHandler: Render Main guy.js",self.instance._name)
             self.write(self.instance._renderJs())
