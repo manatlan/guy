@@ -20,6 +20,7 @@ __version__="0.3.2"
 """
 changelog 0.3.2:
     - jshandler: remove queryparams from referer
+    - _render: include "guy.js?<name>" to avoid history.back trouble for class with html embedded
     
 changelog 0.3.1:
     - MULTI PAGE, via children (useful in server mode !!!)
@@ -1012,7 +1013,7 @@ function reactivity(root, o)  {
 
 
         if html:
-            if includeGuyJs: html="""<script src="guy.js"></script>"""+ html
+            if includeGuyJs: html=("""<script src="guy.js?%s"></script>"""%self._name)+ html
             return rep(html)
         else:
             f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
