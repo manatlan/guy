@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os,sys,re,traceback,copy,types
+from urllib.parse import urlparse
 # #############################################################################
 #    Copyright (C) 2019 manatlan manatlan[at]gmail(dot)com
 #
@@ -16,12 +17,21 @@ import os,sys,re,traceback,copy,types
 #TODO:
 # cookiejar
 
-__version__="0.3.2"
+__version__="0.3.5+"
 """
+    - serve(...open=True...) to open browser by default
+    
+changelog 0.3.5:
+    - js handler now use urlparse (better)
+changelog 0.3.4:
+    - ws reconnect on lost
+    - js for instanciateWindow is now attached in dom, no more only eval'uated
+changelog 0.3.3:
+  - compat py35
 changelog 0.3.2:
     - jshandler: remove queryparams from referer
     - _render: include "guy.js?<name>" to avoid history.back trouble for class with html embedded
-    
+
 changelog 0.3.1:
     - MULTI PAGE, via children (useful in server mode !!!)
     - GLOBAL STATIC FOLDER VAR
@@ -158,8 +168,7 @@ class GuyJSHandler(tornado.web.RequestHandler):
     async def get(self):
         referer=self.request.headers.get("referer",None)
         if referer is None: raise Exception("BROWSER NEED REFERER, ELSE GUY WONT WORK !") #TODO: watch this!
-        page=referer.split("/")[-1]
-        page=page.split("?")[0] # remove queryparams from referer
+        page=urlparse(referer).path.strip("/")
         if page=="" or page==self.instance._name:
             log("GuyJSHandler: Render Main guy.js",self.instance._name)
             self.write(self.instance._renderJs())
@@ -299,7 +308,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                 async def function():
                     return await instance(method,*args)
 
-                asyncio.create_task( execution( function, uuid, "ASYNC") )
+                #asyncio.create_task( execution( function, uuid, "ASYNC") )  #py37
+                asyncio.ensure_future ( execution( function, uuid, "ASYNC") ) #py35
 
             else:
                 async def function():
@@ -349,7 +359,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         self.loop.run_until_complete(_waitExit())
 
         # gracefull death
-        tasks = asyncio.all_tasks(self.loop)
+        ## tasks = asyncio.all_tasks(self.loop) #py37
+        tasks = asyncio.Task.all_tasks(self.loop) #py35
         for task in tasks: task.cancel()
         try:
             self.loop.run_until_complete(asyncio.gather(*tasks))
@@ -601,7 +612,7 @@ class Guy:
         return self._runned
 
 
-    def serve(self,port=8000,log=False):
+    def serve(self,port=8000,log=False,open=True):
         """ Run the guy's app for multiple clients (web/server mode) """
         global LOG
         LOG=log
@@ -616,11 +627,12 @@ class Guy:
         self.callbackExit = exit
         print("Running", ws.startPage )
 
-        try:
-            import webbrowser
-            webbrowser.open_new_tab(ws.startPage)
-        except:
-            pass
+        if open: #auto open browser
+            try:
+                import webbrowser
+                webbrowser.open_new_tab(ws.startPage)
+            except:
+                pass
 
         try:
             ws.join() #important !
@@ -701,9 +713,9 @@ function setupWS( cbCnx ) {
 
     ws.onclose = function(evt) {
         guy.log("** WS Disconnected");
-        cbCnx(null);
+        setTimeout( function() {setupWS(cbCnx)}, 500);
     };
-    ws.onerror = function(evt) {cbCnx(null);};
+    ws.onerror = function(evt) {};
     ws.onopen=function(evt) {
         guy.log("** WS Connected")
         cbCnx(ws);
@@ -830,10 +842,10 @@ var guy={
                 })
             }),
             _div: (function(html){
-                var x=document.createElement("div");
-                x.innerHTML = html
-                document.body.appendChild(x);
-                return x;
+                var tag_div=document.createElement("div");
+                tag_div.innerHTML = html
+                document.body.appendChild(tag_div);
+                return tag_div;
             })(o.html),
             exit: function() {guy.emitMe(o.event, null)},
             run: function() {
@@ -848,7 +860,11 @@ var guy={
             })(key,o.id);
         }
 
-        if(o.scripts) eval(o.scripts)
+        //////// if(o.scripts) eval(o.scripts)
+        var tag_js=document.createElement("script");
+        tag_js.setAttribute('type', 'text/javascript');
+        tag_js.innerHTML = o.scripts
+        self._div.appendChild(tag_js)
 
         //return reactivity(self._div,self)
         return self;
@@ -973,7 +989,9 @@ function reactivity(root, o)  {
             eventExit="event-"+o._id+".exit"
             def exit():
                 log("USE %s: EXIT" % o._name,o._json)
-                asyncio.create_task(self.emitMe(eventExit,o._json))
+                # asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
+                asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
+
 
             html=o._render(GETPATH(),includeGuyJs=False)
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
@@ -1100,5 +1118,43 @@ def runAndroid(ga):
 if __name__ == "__main__":
 
     #~ from testTordu import Tordu as GuyApp
-    from testPrompt import Win as GuyApp
-    GuyApp().run()
+    #~ from testPrompt import Win as GuyApp
+    #~ GuyApp().run()
+
+    class Yo(Guy):
+        """
+        <script>
+        function bip() {
+            document.querySelector("#r").innerHTML+="bip.";
+            refresh()
+        }
+        bip()
+
+        async function refresh() {
+            var x=await self.getYolo()
+        }
+
+        refresh()
+        </script>
+        <button onclick="self.exit()">x</button>
+        <button onclick="bip()">bib</button>
+        <div id=r></div>
+
+        """
+        def getYolo(self):
+            return 42
+
+    class XKif(Guy):
+        """
+        <script>
+        async function xopen() {
+            var w=await self.open()
+            var r=await w.run()
+        }
+        </script>
+        <button onclick="xopen()">OPEN</button>
+        """
+        def open(self):
+            return Yo()
+
+    XKif().serve(log=True)
