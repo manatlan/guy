@@ -9,37 +9,14 @@ If you want to release a standalone app, with all included (your script + a chro
 
 There are 3 ways to release your app :
 
- * **app**: your user will need to have a chrome instance. The GUI will be handled by the chrome instance, runned in "app mode".
+ * **app**: your user will need to have a chrome instance. The GUI will be handled by the chrome instance, runned in "app mode". (on android/ios, the GUI will be handled by webViewClient/kivy)
  * **cef**: (stands for cefpython3): All is embedded, it's the embedded cef instance which will handle your GUI.
  * **server**: it will act as an http server, and any browsers can handle your GUI. So, there can be multiple clients !
 
-Like your understand, your GUI should be build with HTML/JS/CSS. Under the hood, **guy** provides a simple mechanisms (with websockets) to interact with the python technologies. Your GUI can be native HTML/JS or any modern js frameworks : vuejs, angular, etc ...
+Like you understand, your GUI should be build with HTML/JS/CSS. Under the hood, **guy** provides a simple mechanisms (with websockets) to interact with the python technologies. Your GUI can be native HTML/JS or any modern js frameworks : vuejs, angular, etc ...
 handheld
 The **app mode** can be runned on an Android device, using kivy/buildozer toolchain. Understand that the same app can be runned on an android device  or on any computer (win, mac, *nix ...), without any modifications.
 
 !!! info
     Perhaps on iOS devices too, using kivy/builozer, but not tested it !
 
-The simplest guy app could look like this :
-
-```python
-#!/usr/bin/env python3
-from guy import Guy
-
-class Simple(Guy):
-    size=(400,400)
-    __doc__="""<button onclick="test()">test</button>"""
-
-    def test(self):
-        print("hello world")
-
-if __name__ == "__main__":
-    gui=Simple()
-    gui.run()
-```
-
-!!! info
-    If you want to act as a cef instance, replace `gui.run()` by `gui.runCef()`
-
-!!! info
-    If you want to act as a http server, replace `gui.run()` by `gui.serve()`
