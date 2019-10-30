@@ -1,5 +1,7 @@
 **GUY** is like [wuy](https://github.com/manatlan/wuy)
 
+(just started the [documentation](https://manatlan.github.io/guy/) !!)
+
 It's the new name, but it is the same thing ... but:
 
 * more robust (complete rewriting from scratch, without design flaws)
