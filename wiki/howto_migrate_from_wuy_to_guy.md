@@ -6,7 +6,7 @@
 - At launch, get the instance, and apply one of theses methods:
     - instance.run() : for classical "app mode"
     - instance.runCef() : for app mode in cefpython3
-    - instance.server() : for classical "server mode"
+    - instance.serve() : for classical "server mode"
 
 From wuy:
 

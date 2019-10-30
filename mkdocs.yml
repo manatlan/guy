@@ -1,0 +1,20 @@
+site_name: Guy
+site_description: Simple GUI (using chrome) for python
+
+theme:
+    name: 'material'
+    palette:
+        primary: 'purple'
+        accent: 'purple'
+
+repo_name: manatlan/guy
+repo_url: https://github.com/manatlan/guy
+edit_uri: ""
+
+nav:
+    - Introduction: 'index.md'
+
+markdown_extensions:
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - admonition      
