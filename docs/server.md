@@ -72,12 +72,12 @@ class App(Guy):
 ###`init(self)`
 Override this method to do thing, when a client is connected.
 
-###`self.emit( event, arg1, arg2 ... )`
+###`async self.emit( event, arg1, arg2 ... )`
 Call this method to emit an `event` to all connected clients.
 
 It's a non-sense in `app` or `cef` mode : because there is only one client. It only got sense in `server` mode.
 
-###`self.emitMe( event, arg1, arg2 ... )`
+###`async self.emitMe( event, arg1, arg2 ... )`
 Call this method to emit an `event` to the connected client.
 
 ###`self.cfg`
