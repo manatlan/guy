@@ -24,15 +24,16 @@ A **guy's app** can be runned in 3 modes :
 
 A **guy's app** can be released as :
 
- - a simple py3 file,
- - a freezed exexutable (pyinstaller compliant)
+ - a simple py3 file, with only guy dependancy (**app mode** & **server mode**)), or with guy+cefpython3 dependancies (**cef mode**))
+ - a freezed executable (pyinstaller compliant) (all modes)
  - an **apk** (with buildozer/kivy) (**app mode** only)
 
 Read the [Guy's DOCUMENTATION](https://manatlan.github.io/guy/) !
 
-Available on [github](https://github.com/manatlan/guy)
+Available on :
 
-Available on [pypi](https://pypi.org/project/guy/)
+ - [Guy's Github](https://github.com/manatlan/guy)
+ - [Guy's Pypi](https://pypi.org/project/guy/)
 
 Here is a [demo](https://starter-guy.glitch.me/#/) ([sources](https://glitch.com/edit/#!/starter-guy)), of a simple guy's app (server mode).
 
