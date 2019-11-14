@@ -12,7 +12,7 @@ if __name__ == "__main__":
     app=YourApp()
     app.run()           #<- this is how to run it ;-)
 ```
-## The differents mode
+## The differents modes
 ### app mode
 
 Use `app.run()`
