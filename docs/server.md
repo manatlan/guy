@@ -35,6 +35,10 @@ It's a fast way to release a simple component. But it's not adapted for larger a
 !!! info
     here is the `__doc__` declaration. Which is needed if you want to release a component like that on android (because buildozer seems to remove them, if not prefixed)
 
+
+**TODO** : talk about template engine ! (`<<var>>` replaced by instance/class attributs)
+
+
 ### Rendering with an html file
 If you want to separate the UI from the code. You can put your html in a file named as the class name, in a `static` folder.
 
@@ -42,6 +46,9 @@ It's the preferable way to go, for larger app.
 
 !!! info
     In this case : you should provide a tag `<script src="guy.js"></script>` in your html.
+
+**TODO** : talk about template engine ! (`<<var>>` replaced by instance/class attributs)
+
 
 ### Rendering override
 Sometimes, you need to make more things, and you can do it, by overriding the `_render(self, path)` method of your class.
