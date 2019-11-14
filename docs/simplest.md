@@ -1,12 +1,12 @@
 # The simplest guy app could look like this
 
 ```python
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 from guy import Guy
 
 class Simple(Guy):
     size=(400,400)
-    __doc__="""<button onclick="test()">test</button>"""
+    __doc__="""<button onclick="self.test()">test</button>"""
 
     def test(self):
         print("hello world")

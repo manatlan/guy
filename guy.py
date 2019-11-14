@@ -22,7 +22,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.3.7"
+__version__="0.3.8"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -972,8 +972,8 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["']).*guy.js.*(?P=quote)''','src="/%s/guy.js"'%page,x)
-          
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/guy.js"'%page,x)
+
         if html:
             if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
             html=repgjs(html,self._name)
@@ -1063,8 +1063,8 @@ def runAndroid(ga):
 
 
 if __name__ == "__main__":
-    pass
     #~ from testTordu import Tordu as GuyApp
-    #~ from testPrompt import Win as GuyApp
-    #~ GuyApp().run()
+    # from testPrompt import Win as GuyApp
+    # GuyApp().run()
+    pass
 

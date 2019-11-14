@@ -1,5 +1,9 @@
+0.3.8: (14/11/2019)
+
+    - FIX: better regex to replace guy.js script
 
 changelog 0.3.7: initial public release
+
     - "/guy.js" refer to the main instance now (like in the past)
     - global method emit(event,*args) (old wsBroadcast())
     - chrome's folder doesn't contains the port now ! (so same apps share the same chrome's cfg folder)
@@ -7,6 +11,7 @@ changelog 0.3.7: initial public release
     - remove "reactivity commented code"
 
 changelog 0.3.6 "i-wall":
+
     - BIG CHANGE in jshandler ( guy.js -(when rendered)-> "/klassname/guy.js") (no more referer needed!!)
     - BUG FIXED: nb crash when sockets change !!!!!!!
     - BUG FIXED: when cloning instance : init() takes 1 positional argument but 2 were given
@@ -16,20 +21,31 @@ changelog 0.3.6 "i-wall":
     - serve(...open=True...) to open browser by default
     
 changelog 0.3.5:
+
     - js handler now use urlparse (better)
+
 changelog 0.3.4:
+
     - ws reconnect on lost
     - js for instanciateWindow is now attached in dom, no more only eval'uated
+
 changelog 0.3.3:
+
     - compat py35
+
 changelog 0.3.2:
+
     - jshandler: remove queryparams from referer
     - _render: include "guy.js?<name>" to avoid history.back trouble for class with html embedded
+
 changelog 0.3.1:
+
     - MULTI PAGE, via children (useful in server mode !!!)
     - GLOBAL STATIC FOLDER VAR
     - remove js (=>) incompatibility for ie11
+
 changelog 0.3:
+
     - reactive property client side
     - clone server instance at each socket
     - on android : save the cfg in a persistant storage (can reinstall without loose)
@@ -43,6 +59,7 @@ changelog 0.3:
     - introduce self (current guy instance), js side !
     - self != guy !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     - no more guy.EXIT()
+
 changelog 0.2:
     - fetch ssl bypass
     - guy.EXIT()
