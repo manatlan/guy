@@ -4,14 +4,14 @@ You will need to install [kivy](https://kivy.org/) and [buildozer](https://pypi.
 
 This How-to assume that you use a linux platform ;-)
 
-## Limitations
+## Known Limitations
 
 - If you plan to use [vbuild](https://github.com/manatlan/vbuild) (to compile vue sfc components in html), to generate html. You can't use [PyComponents](https://github.com/manatlan/vbuild/blob/master/doc/PyComponent.md). And you will need vbuild >= 0.8.1. (the module [pscript](https://github.com/flexxui/pscript/issues/38#issuecomment-521960204) can't be embedded in an apk)
-- BTW, Some python modules can't be embedded in an APK. Use pure python modules !
+- BTW, Some python modules can't be embedded in an APK : use pure python modules !
 - When you use html in docstring in a guy class. You will need to prefix your docstring like this `__doc__="""html"""`. Because buildozer remove real docstrings from py files.
-- Don't try to embed GuyApp which are runned by `app.runCef()` or `app.serve()` ... only `app.run()` will work ;-)
+- Don't try to embed a GuyApp which are runned by `app.runCef()` or `app.serve()` ... only `app.run()` will work ;-)
 
-## install the tools :
+## Install the tools
 
 ```
 sudo apt install python3-kivy
@@ -38,7 +38,7 @@ Note:
 ** TODO **
 ** TODO **
 
-(mainly from https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android )
+(mainly from [https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android](https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android), french doc! )
 
 
 ## Authorize "Clear Text Traffic" in your APK
@@ -60,7 +60,13 @@ Your app should start on the phone ;-)
 
 ## Deploy in android's playstore
 
-You will need to sign your apk, before uploading it.
+You will need to sign your apk, before uploading it. You will need [OpenJDK tools](https://openjdk.java.net/tools/index.html) !
+
+To release your apk:
+
+    $ buildozer android release
+
+It will produce an apk file ...
 
 ** TODO **
 ** TODO **

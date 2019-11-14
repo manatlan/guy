@@ -17,6 +17,4 @@ Like you understand, your GUI should be built with HTML/JS/CSS. Under the hood, 
 
 The **app mode** can be runned on an Android device, using kivy/buildozer toolchain (for building an apk). Understand that the same app can be runned on any android devices or on any computer (win, mac, *nix ...), without any modifications.
 
-!!! info
-    Perhaps on iOS devices too, using kivy/builozer, but not tested it !
 

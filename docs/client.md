@@ -49,6 +49,19 @@ A place to get/set vars, which will be stored on server side, in a `config.json`
 
 It's all the apis which have been defined in the class instance.
 
+If you have a class like thant, on py side:
+```python
+class Simple(Guy):
+    """<button onclick="self.test()">test</button>"""
+
+    def test(self):
+        print("hello world")
+
+```
+
+You wil have a `self.test()` method in client side !
+
+
 ###`self.exit()`
 Exit the current instance, if it's the main instance : it quits the app.
 

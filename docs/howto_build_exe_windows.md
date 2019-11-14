@@ -1,6 +1,6 @@
 # How to build an exe for Windows
 
-It can be very useful to distribute and exe on Microsoft Windows platforms.
+It can be very useful to distribute and exe on Microsoft Windows platforms (btw, you can freeze an executable on all platforms)
 
 You will need [pyinstaller](https://www.pyinstaller.org/) !
 
