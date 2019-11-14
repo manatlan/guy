@@ -17,6 +17,8 @@ nav:
     - Anatomy: anatomy.md
     - Server side: server.md
     - Client side: client.md
+    - Multiple Instance: multiple.md
+    - Run guy's app: run.md
     - How-to:
         - wuy to guy: howto_migrate_from_wuy_to_guy.md
         - freeze exe/windows: howto_build_exe_windows.md

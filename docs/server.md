@@ -18,22 +18,9 @@ And all declared methods will be available on [client side](client.md).
 
 Here there will be a `self.test()` method in client side.
 
-## Guy Class
 
-###`init(self)`
-Override this method to do thing, when a client is connected.
+## Rendering 
 
-###`self.emit( event, arg1, arg2 ... )`
-Call this method to emit an `event` to all connected clients.
-
-It's a non-sense in `app` or `cef` mode : because there is only one client. It only got sense in `server` mode.
-
-###`self.emitMe( event, arg1, arg2 ... )`
-Call this method to emit an `event` to the connected client.
-
-
-###`self.cfg`
-A place to get/set vars, which will be stored on server side, in a `config.json` file.
 
 ### Rendering with docstring
 It's the simplest thing : just declare your gui/html in the docstring of your class.
@@ -78,6 +65,40 @@ class App(Guy):
 ```
 !!! info
     In this case : you should provide a tag `<script src="guy.js"></script>` in your response.
+
+
+## Guy Class
+
+###`init(self)`
+Override this method to do thing, when a client is connected.
+
+###`self.emit( event, arg1, arg2 ... )`
+Call this method to emit an `event` to all connected clients.
+
+It's a non-sense in `app` or `cef` mode : because there is only one client. It only got sense in `server` mode.
+
+###`self.emitMe( event, arg1, arg2 ... )`
+Call this method to emit an `event` to the connected client.
+
+###`self.cfg`
+A place to get/set vars, which will be stored on server side, in a `config.json` file.
+
+###`size`
+With this class attribut you can specify the size of your window.
+
+This is a non-sense, in `server` mode. Because, it's the client which determine the size of its tab.
+
+```python
+class Simple(Guy):
+    size=(400,400)
+    """<button onclick="self.test()">test</button>"""
+```
+
+```python
+class Simple(guy.Guy):
+    size=guy.FULLSCREEN
+    """<button onclick="self.test()">test</button>"""
+```
 
 ## Static content
 **guy** will serve everything that is contained in a `static` folder, as static content.

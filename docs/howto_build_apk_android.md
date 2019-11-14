@@ -9,7 +9,6 @@ This How-to assume that you use a linux platform ;-)
 - If you plan to use [vbuild](https://github.com/manatlan/vbuild) (to compile vue sfc components in html), to generate html. You can't use [PyComponents](https://github.com/manatlan/vbuild/blob/master/doc/PyComponent.md). And you will need vbuild >= 0.8.1. (the module [pscript](https://github.com/flexxui/pscript/issues/38#issuecomment-521960204) can't be embedded in an apk)
 - BTW, Some python modules can't be embedded in an APK. Use pure python modules !
 - When you use html in docstring in a guy class. You will need to prefix your docstring like this `__doc__="""html"""`. Because buildozer remove real docstrings from py files.
-- You can't run many instance in a GuyApp : only one ;-)
 - Don't try to embed GuyApp which are runned by `app.runCef()` or `app.serve()` ... only `app.run()` will work ;-)
 
 ## install the tools :
@@ -59,7 +58,7 @@ Connect your smartphone with an usb cable to your computer, and run:
 
 Your app should start on the phone ;-)
 
-## Deploy in play store
+## Deploy in android's playstore
 
 You will need to sign your apk, before uploading it.
 
