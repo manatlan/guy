@@ -20,10 +20,10 @@ Here is the same simple **guy**'s app :
         <tr>
             <td valign="top">
                 On Ubuntu<br>
-<img src="https://github.com/manatlan/guy/blob/master/wiki/shot_ubuntu.png" width="300" border="1" style="border:1px solid black"/>             </td>
+<img src="https://github.com/manatlan/guy/blob/master/docs/shot_ubuntu.png" width="300" border="1" style="border:1px solid black"/>             </td>
             <td valign="top">
-                On Android9<br>
-    <img src="https://github.com/manatlan/guy/blob/master/wiki/shot_android9.png" width="300" border="1" style="border:1px solid black"/>                
+                On Android10<br>
+    <img src="https://github.com/manatlan/guy/blob/master/docs/shot_android10.jpg" width="300" border="1" style="border:1px solid black"/>                
            </td>
         </tr>
     </table>

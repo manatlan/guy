@@ -8,3 +8,17 @@ Only server's mode are availables as demos (on [glitch.com](https://glitch.com))
 
 If you want to try app/cef mode, just test the [test*.py files here](https://github.com/manatlan/guy) on your computer.
 
+Here is `testPrompt.py` :
+<p align="center">
+    <table>
+        <tr>
+            <td valign="top">
+                On Ubuntu<br>
+<img src="https://github.com/manatlan/guy/blob/master/docs/shot_ubuntu.png" width="300" border="1" style="border:1px solid black"/>             </td>
+            <td valign="top">
+                On Android10<br>
+    <img src="https://github.com/manatlan/guy/blob/master/docs/shot_android10.jpg" width="300" border="1" style="border:1px solid black"/>                
+           </td>
+        </tr>
+    </table>
+</p>
