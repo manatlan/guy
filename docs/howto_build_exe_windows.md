@@ -1,19 +1,19 @@
 # How to build an exe for Windows
 
-It can be very useful to distribute and exe on Microsoft Windows platforms (btw, you can freeze an executable on all platforms)
+It can be very useful to distribute and exe on Microsoft Windows platforms. By the way, you can freeze an executable on all platforms. But the following lines are for Windows platform.
 
 You will need [pyinstaller](https://www.pyinstaller.org/) !
 
 ## A "light" one, with the need of chrome on the host
 
-Who doesn't have chrome on its computer ?!
+(Who doesn't have chrome on its computer ?!)
 
-If there is a chrome on the host. It's the best option : the exe will reuse the installed chrome in "app mode". The exe will be lighter (6mo min)
+If yours users have chrome installed. It's the best option : the exe will reuse the installed chrome in "app mode". The exe will be lighter (6mo min)
 
 It's the best option for `app.run()` or `app.serve()` modes in your main py file.
 
 ```
-pyinstaller.exe YourGuyApp.py --noupx --onefile --noconsole --exclude-module cefpython3 --add-data="static;static"
+> pyinstaller.exe YourGuyApp.py --noupx --onefile --noconsole --exclude-module cefpython3 --add-data="static;static"
 ```
 
 Notes:
@@ -34,7 +34,7 @@ Install cefpython
 And change your `app.run()` into `app.runCef()` in your main py file.
 
 ```
-pyinstaller.exe YourGuyApp.py --noupx --onefile --noconsole  --add-data="static;static"
+> pyinstaller.exe YourGuyApp.py --noupx --onefile --noconsole  --add-data="static;static"
 ```
 
 Notes:
