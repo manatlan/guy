@@ -12,3 +12,5 @@ For `app` & `cef` mode : guy run the two in a windowed app. (there is one server
 For `server` mode : guy run the server, and a classical browser can be a client, when connected. (there is one server & many clients)
 
 In all cases : the http server serve the client as a html component. And the client communicate with the server with a websocket.
+
+Technically : it's the marvellous [tornado](https://www.tornadoweb.org/en/stable/), an asynchronous networking library which handle http & socket. So **guy** can work for python >= 3.5 (ready for raspberry pi !)
