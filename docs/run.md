@@ -40,7 +40,7 @@ Optionnal parameters:
 
 ## To summarize the choice
 
-Just a table to help to select the best mode for your need
+Just a table to help you to select the best mode for your needs
 
  | Mode :                                 | App | Cef  | Server |
  |:---------------------------------------|:---:|:----:|:------:|
