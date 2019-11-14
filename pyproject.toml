@@ -1,18 +1,19 @@
 [tool.poetry]
 name = "guy"
-version = "0.3.0"
+version = "0.3.7"
 description = "A simple module for making HTML GUI applications with python3"
 authors = ["manatlan <manatlan@gmail.com>"]
 readme = 'README.md'
+license="Apache-2.0"
 keywords=['gui', 'html', 'javascript', 'electron', "asyncio", "tornado", "websocket"]
 homepage = "https://github.com/manatlan/guy"
 repository = "https://github.com/manatlan/guy"
 documentation = "https://github.com/manatlan/guy"
-license="MIT"
 classifiers = [
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Build Tools",        
+        "License :: OSI Approved :: Apache Software License",        
 ]
 
 [tool.poetry.dependencies]

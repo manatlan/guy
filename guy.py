@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # #############################################################################
-#    Copyright (C) 2019 manatlan manatlan[at]gmail(dot)com
+#    Apache2 2019 - manatlan manatlan[at]gmail(dot)com
 #
-# MIT licence
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
 #
-# https://github.com/manatlan/guy
+#    more: https://github.com/manatlan/guy
 # #############################################################################
 
 #python3 -m pytest --cov-report html --cov=guy .
@@ -1103,45 +1111,8 @@ def runAndroid(ga):
 
 
 if __name__ == "__main__":
-
+    pass
     #~ from testTordu import Tordu as GuyApp
     #~ from testPrompt import Win as GuyApp
     #~ GuyApp().run()
 
-    class Yo(Guy):
-        """
-        <script>
-        function bip() {
-            document.querySelector("#r").innerHTML+="bip.";
-            refresh()
-        }
-        bip()
-
-        async function refresh() {
-            var x=await self.getYolo()
-        }
-
-        refresh()
-        </script>
-        <button onclick="self.exit()">x</button>
-        <button onclick="bip()">bib</button>
-        <div id=r></div>
-
-        """
-        def getYolo(self):
-            return 42
-
-    class XKif(Guy):
-        """
-        <script>
-        async function xopen() {
-            var w=await self.open()
-            var r=await w.run()
-        }
-        </script>
-        <button onclick="xopen()">OPEN</button>
-        """
-        def open(self):
-            return Yo()
-
-    XKif().serve(log=True)
