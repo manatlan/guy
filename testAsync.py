@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import guy,asyncio,time
 
-class asyncTest(guy.Guy):    # name the class as the web/<class_name>.html
+class asyncTest(guy.Guy):
     __doc__="""
 <script>
 function rep(x) {
@@ -29,5 +29,5 @@ function rep(x) {
         return "async long"
 
 if __name__=="__main__":
-    d=asyncTest()
-    d.run()
+    app=asyncTest()
+    app.run()
