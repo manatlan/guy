@@ -19,6 +19,7 @@ nav:
     - Client side: client.md
     - Multiple Instance: multiple.md
     - Run guy's app: run.md
+    - Demo: demo.md
     - How-to:
         - From wuy to guy: howto_migrate_from_wuy_to_guy.md
         - Freeze exe/windows: howto_build_exe_windows.md
