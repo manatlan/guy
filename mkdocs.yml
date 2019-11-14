@@ -14,7 +14,13 @@ edit_uri: ""
 nav:
     - Introduction: 'index.md'
     - Example: 'simplest.md'
-
+    - Anatomy: anatomy.md
+    - Server side: server.md
+    - Client side: client.md
+    - How-to:
+        - wuy to guy: howto_migrate_from_wuy_to_guy.md
+        - freeze exe/windows: howto_build_exe_windows.md
+        - Produce an APK/android: howto_build_apk_android.md
 markdown_extensions:
   - markdown.extensions.codehilite:
       guess_lang: false

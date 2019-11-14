@@ -10,13 +10,17 @@
 
 From wuy:
 
-```
+```python
 AppWindow()
 ```
 
 to guy:
 
-```
+```python
 app=AppWindow() 
 app.run()
 ```
+
+NOTE:
+
+ - if socket close : client will reconnect !
