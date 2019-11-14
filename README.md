@@ -1,6 +1,9 @@
 **GUY** is like [wuy](https://github.com/manatlan/wuy)
 
-(just started the [documentation](https://manatlan.github.io/guy/) !!)
+Read the [documentation](https://manatlan.github.io/guy/) !!
+
+Here is a [demo](https://starter-guy-vuejs.glitch.me/#/) ([sources](https://glitch.com/~starter-guy-vuejs)), of a guy's app serving a vuejs/sfc UI on glitch.com.
+
 
 It's the new name, but it is the same thing ... but:
 
