@@ -28,7 +28,7 @@ A **guy's app** can be released as :
  - a freezed executable (pyinstaller compliant) (all modes)
  - an **apk** (with buildozer/kivy) (**app mode** only)
 
-Read the [Guy's DOCUMENTATION](https://manatlan.github.io/guy/) !
+Read the [Guy's DOCUMENTATION](https://guy-docs.glitch.me/) !
 
 Available on :
 
