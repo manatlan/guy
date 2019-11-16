@@ -22,7 +22,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.3.8"
+__version__="0.3.9"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -347,6 +347,12 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         while not isFree("localhost", self.port):
             self.port += 1
+
+        try: # https://bugs.python.org/issue37373 FIX: tornado/py3.8 on windows
+            if sys.platform == 'win32':
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())            
+        except:
+            pass
 
     def run(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -1064,7 +1070,7 @@ def runAndroid(ga):
 
 if __name__ == "__main__":
     #~ from testTordu import Tordu as GuyApp
-    # from testPrompt import Win as GuyApp
-    # GuyApp().run()
+    from testPrompt import Win as GuyApp
+    GuyApp().run()
     pass
 

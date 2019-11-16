@@ -1,3 +1,7 @@
+0.3.9: (16/11/2019)
+
+- FIX: tornado/py3.8 on windows
+
 0.3.8: (14/11/2019)
 
 - FIX: better regex to replace guy.js script
