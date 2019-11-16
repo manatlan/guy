@@ -1070,7 +1070,7 @@ def runAndroid(ga):
 
 if __name__ == "__main__":
     #~ from testTordu import Tordu as GuyApp
-    from testPrompt import Win as GuyApp
-    GuyApp().run()
+    # from testPrompt import Win as GuyApp
+    # GuyApp().run()
     pass
 
