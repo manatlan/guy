@@ -73,10 +73,13 @@ def pathConfig():
     else:
         if isPackage():
             import __main__
-            name=os.path.basename(__main__.__file__)
-            return os.path.join( os.path.expanduser("~") , ".%s.json"%name )
-        else:
-            return os.path.join( exepath, "config.json" )
+            try:
+                name=os.path.basename(__main__.__file__)
+                return os.path.join( os.path.expanduser("~") , ".%s.json"%name )
+            except:
+                pass
+            
+        return os.path.join( exepath, "config.json" )
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
