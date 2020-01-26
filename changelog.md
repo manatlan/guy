@@ -1,3 +1,10 @@
+0.4.0: (26/01/2020)
+- BIG CHANGES : 
+    - Don't change/enforce the CWD !!!
+    - Ability to be embbeded in a pip/package (see the how-to with poetry)
+    - When pip-packaged : save in `~/.<package_name>.json`
+    - The use of guy's config is now displayed in log (when log on)
+
 0.3.9: (16/11/2019)
 
 - FIX: tornado/py3.8 on windows

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # #############################################################################
-#    Apache2 2019 - manatlan manatlan[at]gmail(dot)com
+#    Apache2 2019-2020 - manatlan manatlan[at]gmail(dot)com
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@
 
 #python3 -m pytest --cov-report html --cov=guy .
 
-
 #TODO:
 # cookiejar
 
-__version__="0.3.9"
+__version__="0.4.0"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -50,9 +49,34 @@ ISANDROID = "android" in sys.executable
 LOG=None
 FOLDERSTATIC="static"
 
-GETPATH=os.getcwd
-if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
-    GETPATH=lambda: sys._MEIPASS
+
+def isPackage():
+    """ return the path to the package, if it's a package else None """
+    if "." in __name__: # perhaps as a pip package
+        module=__name__.split(".")[0]
+        mpath=os.path.dirname(os.path.abspath(os.path.realpath(sys.modules[module].__file__)))
+        if os.path.isdir( os.path.join(mpath,FOLDERSTATIC) ):
+            return mpath # 'static' seems to be embedded in pkg
+
+def pathToData():
+    """ Return the path to the home of data (things embbeded)"""
+    if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
+        return sys._MEIPASS
+    else:
+        return isPackage() or os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
+
+def pathConfig():
+    """ Return the path to the config.json"""
+    exepath=os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
+    if ISANDROID:
+        return os.path.join( exepath, "..", "config.json" )
+    else:
+        if isPackage():
+            import __main__
+            name=os.path.basename(__main__.__file__)
+            return os.path.join( os.path.expanduser("~") , ".%s.json"%name )
+        else:
+            return os.path.join( exepath, "config.json" )
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -198,7 +222,7 @@ class MainHandler(tornado.web.RequestHandler):
         await self._callhttp(page)
     async def patch(self,page): # page doesn't contains a dot '.'
         await self._callhttp(page)
-    
+
     def instanciate(self,page,*a,**k):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
         gclass=declared.get(page,None)
@@ -206,15 +230,15 @@ class MainHandler(tornado.web.RequestHandler):
             log("MainHandler: Auto instanciate",page)
             self.instance._children[page]=gclass(*a,**k)
             return self.instance._children[page]
-                    
+
     def render(self,instance):
         """ write rendered instance """
-        self.write(instance._render( GETPATH() ))
-      
+        self.write(instance._render( pathToData() ))
+
     async def _callhttp(self,page):
         if not await callhttp(self,page):
           raise tornado.web.HTTPError(status_code=404)
-                  
+
 
 
 class ProxyHandler(tornado.web.RequestHandler):
@@ -350,7 +374,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         try: # https://bugs.python.org/issue37373 FIX: tornado/py3.8 on windows
             if sys.platform == 'win32':
-                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())            
+                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         except:
             pass
 
@@ -366,7 +390,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/guy.js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^/]+)/guy.js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\\.]*)',  MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( GETPATH(), FOLDERSTATIC) })
+            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( pathToData(), FOLDERSTATIC) })
         ])
         app.listen(self.port,address=self.host)
 
@@ -534,7 +558,7 @@ class ChromeAppCef:
 
     def exit(self):
         self.__instance.Shutdown()
-    
+
 
 
 class Guy:
@@ -593,8 +617,6 @@ class Guy:
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
         else:
-            os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
-
             ws=WebServer( self )
             ws.start()
 
@@ -620,7 +642,6 @@ class Guy:
         global LOG
         LOG=log
 
-        os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self )
         ws.start()
 
@@ -640,7 +661,6 @@ class Guy:
         global LOG
         LOG=log
 
-        os.chdir( os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0]))) )
         ws=WebServer( self ,"0.0.0.0",port=port )
         ws.start()
 
@@ -674,10 +694,9 @@ class Guy:
     def cfg(self):
         class Proxy:
             def __init__(self):
-                if ISANDROID:
-                    self.__o=JDict(os.path.join( os.getcwd(),"..","config.json"))
-                else:
-                    self.__o=JDict(os.path.join( os.getcwd(),"config.json"))
+                cfgfile=pathConfig()
+                log("Use config:",cfgfile)
+                self.__o=JDict( cfgfile )
             def __setattr__(self,k,v):
                 if k.startswith("_"):
                     super(Proxy, self).__setattr__(k, v)
@@ -941,7 +960,7 @@ var self= {
                 asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
 
 
-            html=o._render(GETPATH(),includeGuyJs=False)
+            html=o._render( pathToData(),includeGuyJs=False)
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o.callbackExit=exit
