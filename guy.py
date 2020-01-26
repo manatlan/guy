@@ -30,7 +30,6 @@ import tornado.web
 import tornado.websocket
 import tornado.platform.asyncio
 import tornado.autoreload
-
 import platform
 import json
 import asyncio
@@ -43,12 +42,17 @@ import webbrowser
 import concurrent
 import inspect
 import uuid
+import logging
 
 class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
-LOG=None
 FOLDERSTATIC="static"
 
+handler = logging.StreamHandler()
+handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
+logger = logging.getLogger("guy")
+logger.addHandler(handler)
+logger.setLevel(logging.ERROR)
 
 def isPackage():
     """ return the path to the package, if it's a package else None """
@@ -108,10 +112,6 @@ async def callhttp(web,path): # web: RequestHandler
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
-
-def log(*a):
-    if LOG:
-        print(" ".join([str(i) for i in a]))
 
 def serialize(obj):
     def toJSDate(d):
@@ -183,12 +183,12 @@ class GuyJSHandler(tornado.web.RequestHandler):
         self.instance=instance
     async def get(self,page=""):
         if page==self.instance._name or page=="":
-            log("GuyJSHandler: Render Main guy.js",self.instance._name)
+            logger.debug("GuyJSHandler: Render Main guy.js (%s)",self.instance._name)
             self.write(self.instance._renderJs())
         else:
             chpage=self.instance._children.get(page,None)
             if chpage is not None:
-                log("GuyJSHandler: Render Children guy.js",page)
+                logger.debug("GuyJSHandler: Render Children guy.js (%s)",page)
                 self.write(chpage._renderJs(asChild=True))
             else:
                 raise tornado.web.HTTPError(status_code=404)
@@ -201,14 +201,14 @@ class MainHandler(tornado.web.RequestHandler):
         if not await callhttp(self,page):
         #####################################################
             if page=="" or page==self.instance._name:
-                log("MainHandler: Render Main Instance",self.instance._name)
+                logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
                 self.render(self.instance)
             else:
                 chpage=self.instance._children.get(page,None)
                 if chpage is None:
                     chpage=self.instanciate(page)
                 if chpage:
-                    log("MainHandler: Render Children",page)
+                    logger.debug("MainHandler: Render Children (%s)",page)
                     self.render(chpage)
                 else:
                     raise tornado.web.HTTPError(status_code=404)
@@ -230,7 +230,7 @@ class MainHandler(tornado.web.RequestHandler):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
         gclass=declared.get(page,None)
         if gclass: # auto instanciate !
-            log("MainHandler: Auto instanciate",page)
+            logger.debug("MainHandler: Auto instanciate (%s)",page)
             self.instance._children[page]=gclass(*a,**k)
             return self.instance._children[page]
 
@@ -263,17 +263,17 @@ class ProxyHandler(tornado.web.RequestHandler):
         headers = {k[4:]: v for k, v in self.request.headers.items() if k.lower().startswith("set-")}
 
         http_client = tornado.httpclient.AsyncHTTPClient()
-        log("PROXY FETCH",method,url,headers,body)
+        logger.debug("PROXY FETCH (%s %s %s %s)",method,url,headers,body)
         try:
             response = await http_client.fetch(url, method=method,body=body,headers=headers,validate_cert = False)
             self.set_status(response.code)
             for k, v in response.headers.items():
                 if k.lower() in ["content-type", "date", "expires", "cache-control"]:
                     self.set_header(k,v)
-            log("PROXY FETCH",response.code,"size=",len(response.body))
+            logger.debug("PROXY FETCH, return=%s, size=%s",response.code,len(response.body))
             self.write(response.body)
         except Exception as e:
-            log("PROXY FETCH ERROR",e,"return 0")
+            logger.debug("PROXY FETCH ERROR (%s), return 0",e)
             self.set_status(0)
             self.write(str(e))
 
@@ -283,12 +283,12 @@ async def sockwrite(wsock, **kwargs ):
         try:
             await wsock.write_message(jDumps(kwargs))
         except Exception as e:
-            print("Socket write : can't")
+            logger.error("Socket write : can't")
             if wsock in WebSocketHandler.clients: del WebSocketHandler.clients[wsock]
 
 
 async def emit(event,*args):
-    log(">>> Emit ALL:",event,args)
+    logger.debug(">>> Emit ALL: %s (%s)",event,args)
     clients=list( WebSocketHandler.clients.keys() )
     for i in clients:
         await sockwrite(i,event=event,args=args)
@@ -313,7 +313,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         instance = WebSocketHandler.clients[self]
 
         o = jLoads(message)
-        log("WS RECEPT:",o)
+        logger.debug("WS RECEPT: %s",o)
         method,args,uuid = o["command"],o["args"],o["uuid"]
 
         if method == "emit":
@@ -321,7 +321,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             await emit( event, *args )
         else:
             async def execution(function, uuid,mode):
-                log("Execute (%s)"%mode,method,args)
+                logger.debug("Execute (%s) %s(%s)",mode,method,args)
                 try:
                     ret = await function()
                     ##############################################################
@@ -336,10 +336,10 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                     r = dict(error="task cancelled", uuid=uuid)
                 except Exception as e:
                     r = dict(error=str(e), uuid=uuid)
-                    print("=" * 40, "in ", method, mode)
-                    print(traceback.format_exc().strip())
-                    print("=" * 40)
-                log(">>> (%s)"%mode,r)
+                    logger.error("================================= in %s %s", method, mode)
+                    logger.error(traceback.format_exc().strip())
+                    logger.error("=================================")
+                logger.debug(">>> (%s) %s",mode,r)
                 await sockwrite(self,**r)
 
             fct=instance._getRoutage(method)
@@ -465,7 +465,7 @@ class ChromeApp:
                     "--user-data-dir=%s"
                     % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^\w]","_",url))
                 )
-            log("CHROME APP-MODE:",args)
+            logger.debug("CHROME APP-MODE: %s",args)
             self.__instance = subprocess.Popen(args)
         else:
             raise Exception("no chrome browser, no app-mode !")
@@ -545,13 +545,13 @@ class ChromeAppCef:
                     try:
                         cef.WindowUtils.SetTitle(browser, title)
                     except AttributeError:
-                        print(
-                            "**WARNING** : title changed '%s' not work on linux" % title
+                        logger.warn(
+                            "**WARNING** : title changed '%s' not work on linux",title
                         )
 
             b.SetClientHandler(WuyClientHandler())
             b.SetClientHandler(WuyDisplayHandler())
-            log("CEFPYTHON :",url)
+            logger.debug("CEFPYTHON : %s",url)
             return cef
 
         self.__instance=cefbrowser()
@@ -590,7 +590,7 @@ class Guy:
 
 
     def _initCopy(self,wsock):
-        log("CLONE",self._name)
+        logger.debug("CLONE %s",self._name)
         keys=self._routes.keys()
         self._routes={}
         new = copy.copy(self)
@@ -615,8 +615,8 @@ class Guy:
 
     def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
-        global LOG
-        LOG=log
+        if log: logger.setLevel(logging.DEBUG)
+
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
         else:
@@ -642,8 +642,7 @@ class Guy:
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
-        global LOG
-        LOG=log
+        if log: logger.setLevel(logging.DEBUG)
 
         ws=WebServer( self )
         ws.start()
@@ -661,8 +660,7 @@ class Guy:
 
     def serve(self,port=8000,log=False,open=True):
         """ Run the guy's app for multiple clients (web/server mode) """
-        global LOG
-        LOG=log
+        if log: logger.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port )
         ws.start()
@@ -698,7 +696,7 @@ class Guy:
         class Proxy:
             def __init__(self):
                 cfgfile=pathConfig()
-                log("Use config:",cfgfile)
+                logger.debug("Use config: %s",cfgfile)
                 self.__o=JDict( cfgfile )
             def __setattr__(self,k,v):
                 if k.startswith("_"):
@@ -719,7 +717,7 @@ class Guy:
         else:
             size=None
         routes=[k for k,v in self._routes.items() if not v.__func__.__qualname__.startswith("Guy.")]
-        log("ROUTES:",routes)
+        logger.debug("ROUTES: %s",routes)
         js = """
 document.addEventListener("DOMContentLoaded", function(event) {
     %s
@@ -917,7 +915,7 @@ var self= {
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
-        "true" if LOG else "false",
+        "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
 
@@ -927,7 +925,7 @@ var self= {
         await emit(event, *args)
 
     async def emitMe(self,event, *args):
-        log(">>> emitMe",event,args)
+        logger.debug(">>> emitMe %s (%s)",event,args)
         await sockwrite(self._wsock,event=event,args=args)
 
     def _getRoutage(self,method):
@@ -936,10 +934,10 @@ var self= {
             id,method = method.split(".")
             for i in self._children.values():
                 if i._id == id:
-                    log("METHOD CHILD",i._name,method)
+                    logger.debug("METHOD CHILD %s %s",i._name,method)
                     function=i._routes[method]
         else:
-            log("METHOD SELF",method)
+            logger.debug("METHOD SELF %s",method)
             function=self._routes[method]
         return function
 
@@ -958,7 +956,7 @@ var self= {
 
             eventExit="event-"+o._id+".exit"
             def exit():
-                log("USE %s: EXIT" % o._name,o._json)
+                logger.debug("USE %s: EXIT (%s)",o._name,o._json)
                 # asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
                 asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
 

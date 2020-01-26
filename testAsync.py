@@ -16,6 +16,7 @@ function rep(x) {
 
 <div id="rep"></div>
     """
+    size=(200,200)
 
     def doSyncQuick(self):
         return "quick"
