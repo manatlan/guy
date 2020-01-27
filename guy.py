@@ -63,14 +63,22 @@ def isPackage():
             return mpath # 'static' seems to be embedded in pkg
 
 def pathToData():
-    """ Return the path to the home of data (things embbeded)"""
+    """ Return the path to the home of data (things embbeded)
+         - the path of the frozen data, if it's a pyinstaller frozen exe.
+         - or the path of the embbeded data of the package, if it's a package
+         - else the path of the main script
+    """
     if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
         return sys._MEIPASS
     else:
         return isPackage() or os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
 
 def pathConfig():
-    """ Return the path to the config.json"""
+    """ Return the full path to the config.json
+        - the full path to the config.json, if we are on android (in the parent folder of the app)
+        - or the full path to the "~/<package_name>.json", if it's a package
+        - else the path of the main script
+    """
     exepath=os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
     if ISANDROID:
         return os.path.join( exepath, "..", "config.json" )
