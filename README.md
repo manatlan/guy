@@ -26,7 +26,8 @@ A **guy's app** can be released as :
 
  - a simple py3 file, with only guy dependancy (**app mode** & **server mode**)), or with guy+cefpython3 dependancies (**cef mode**))
  - a freezed executable (pyinstaller compliant) (all modes)
- - an **apk** (with buildozer/kivy) (**app mode** only)
+ - a [pip/package app](https://guy-docs.glitch.me/howto_build_whl_package/) (all modes)
+ - an **apk** for android (with buildozer/kivy) (**app mode** only)
 
 Read the [Guy's DOCUMENTATION](https://guy-docs.glitch.me/) !
 
