@@ -21,7 +21,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.4.1"
+__version__="0.4.2"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -270,8 +270,12 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.instance=instance
 
     def open(self):
-        new=self.instance._initCopy( self )
-
+        page=self.get_query_argument("id")
+        ichildren=self.instance._children.get(page,None)
+        if ichildren:
+            new=ichildren._initCopy( self )
+        else:
+            new=self.instance._initCopy( self )
         WebSocketHandler.clients[self]=new
 
     def on_close(self):
@@ -532,6 +536,16 @@ class ChromeAppCef:
         self.__instance.Shutdown()
 
 
+async def doInit( instance ):
+    try:
+        if hasattr(instance,"init"):
+            self_init = getattr(instance, "init")
+            if asyncio.iscoroutinefunction( self_init ):
+                await self_init( instance )
+            else:
+                self_init( instance )
+    except TypeError as e:
+        pass
 
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
@@ -571,17 +585,14 @@ class Guy:
             if n in keys:
                 if inspect.isfunction(v):
                     new._routes[n]=types.MethodType( v, new ) #rebound !
+                    setattr(new,n,types.MethodType( v, new )) #rebound !
                 else:
                     new._routes[n]=v
 
         new._wsock = wsock
         self._runned = new
 
-        try:
-          if hasattr(new,"init"):
-              new.init(new)
-        except TypeError:
-          pass
+        asyncio.ensure_future( doInit(new) )
 
         return new
 
@@ -673,7 +684,7 @@ class Guy:
                     path=os.path.join( os.path.dirname(exepath), "..", "config.json" )
                 else:
                     exepath=os.path.abspath(os.path.realpath(sys.argv[0])) # or os.path.abspath(__main__.__file__)
-                    classpath= os.path.abspath( inspect.getfile( self.__class__ ) )
+                    classpath= os.path.abspath( os.path.realpath(inspect.getfile( self.__class__ )) )
                     if classpath!=exepath: # as module
                         path=os.path.join( os.path.expanduser("~") , ".%s.json"%os.path.basename(exepath) )
                     else: # as exe
@@ -710,7 +721,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/ws"
+    var url=window.location.origin.replace("http","ws")+"/ws?id=%s"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -898,6 +909,7 @@ var self= {
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
+        self._name, # for the socket
         "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
@@ -925,7 +937,6 @@ var self= {
         return function
 
     def __call__(self,method,*args):
-
         function = self._getRoutage(method)
 
         ret= function(*args)
@@ -948,7 +959,8 @@ var self= {
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o.callbackExit=exit
-            if hasattr(o,"init"): o.init(o)
+            asyncio.ensure_future( doInit(o) )
+            
             obj=dict(
                 id=o._id,
                 name=o._name,

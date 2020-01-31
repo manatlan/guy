@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 # -*- coding: utf-8 -*-
 from guy import Guy,FULLSCREEN
 import asyncio,datetime
@@ -27,7 +27,8 @@ class Spinner(Guy):
     <h3>Wait...</h3>
 </div>
 """
-
+    def init(self):
+        print("I'm spinner")
 
 class MsgBox(Guy):
     size=(300,150)
@@ -43,6 +44,9 @@ class MsgBox(Guy):
     def __init__(self,title="unknown"):
         Guy.__init__(self)
         self.title=title
+
+    def init(self):
+        print("I'm MsgBox")
 
 
 
@@ -66,6 +70,9 @@ class Confirm(Guy):
     def confirmChoice(self,val):
         self.ret=val
         self.exit()
+
+    def init(self):
+        print("I'm Confirm")
 
 
 class Prompt(Guy):
@@ -97,6 +104,8 @@ document.querySelector("#n").focus()
         self.ret=txt
         self.exit()
 
+    def init(self):
+        print("I'm Prompt")
 
 class Win(Guy):
     size=(400,500)
@@ -170,6 +179,8 @@ document.addEventListener("contextmenu", function (e) {
         self.defaultName=self.cfg.name or "empty"
         self.defaultSurname=self.cfg.surname or "empty"
 
+    def init(self):
+        print("I'm Win")
 
     def winPrompt(self,txt,val):
         return Prompt(txt,val)

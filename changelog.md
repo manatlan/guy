@@ -1,3 +1,8 @@
+0.4.2: (31/01/2020)
+ - FIX : trouble to find config folder when symbolic link used
+ - EVOL: "init" can now be async too
+ - FIX: the right "init" is now called when a instance is created (on ws call)
+
 0.4.1: (31/01/2020)
 
 - FIX: trouble with venv (ability to find static data)

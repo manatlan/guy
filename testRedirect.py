@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 # -*- coding: utf-8 -*-
 from guy import Guy
 
@@ -29,6 +29,9 @@ class Marco(Guy,Glob):
       <button onclick="self.open()">open</button>
   """
 
+  def init(self):
+    print("Start Marco")
+
   def open(self):
     return Polo()
 
@@ -56,6 +59,9 @@ class Polo(Guy,Glob):
       <a href="/">go to marco</a>
   """
 
+  def init(self):
+    print("Start Polo")
+
   def t2(self):
     return "t2"
 
@@ -66,6 +72,6 @@ class Polo(Guy,Glob):
 
 if __name__ == "__main__":
     app=Marco()
-    app.serve(log=True)
+    app.run(log=True)
     #~ app.run()
 
