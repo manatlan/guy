@@ -18,7 +18,7 @@ class TapTempo(guy.Guy):
     <center>Tap Tempo!</center>
     <center id="tempo"></center>
     """
-    size=(100,60)
+    size=(140,100)
     t=[]
 
     def tap(self):

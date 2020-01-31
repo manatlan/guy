@@ -21,7 +21,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.4.0"
+__version__="0.4.1"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -53,45 +53,6 @@ handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %
 logger = logging.getLogger("guy")
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
-
-def isPackage():
-    """ return the path to the package, if it's a package else None """
-    if "." in __name__: # perhaps as a pip package
-        module=__name__.split(".")[0]
-        mpath=os.path.dirname(os.path.abspath(os.path.realpath(sys.modules[module].__file__)))
-        if os.path.isdir( os.path.join(mpath,FOLDERSTATIC) ):
-            return mpath # 'static' seems to be embedded in pkg
-
-def pathToData():
-    """ Return the path to the home of data (things embbeded)
-         - the path of the frozen data, if it's a pyinstaller frozen exe.
-         - or the path of the embbeded data of the package, if it's a package
-         - else the path of the main script
-    """
-    if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
-        return sys._MEIPASS
-    else:
-        return isPackage() or os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
-
-def pathConfig():
-    """ Return the full path to the config.json
-        - the full path to the config.json, if we are on android (in the parent folder of the app)
-        - or the full path to the "~/<package_name>.json", if it's a package
-        - else the path of the main script
-    """
-    exepath=os.path.dirname(os.path.abspath(os.path.realpath(sys.argv[0])))
-    if ISANDROID:
-        return os.path.join( exepath, "..", "config.json" )
-    else:
-        if isPackage():
-            import __main__
-            try:
-                name=os.path.basename(__main__.__file__)
-                return os.path.join( os.path.expanduser("~") , ".%s.json"%name )
-            except:
-                pass
-            
-        return os.path.join( exepath, "config.json" )
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -244,7 +205,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     def render(self,instance):
         """ write rendered instance """
-        self.write(instance._render( pathToData() ))
+        self.write(instance._render( instance._folder ))
 
     async def _callhttp(self,page):
         if not await callhttp(self,page):
@@ -401,7 +362,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/guy.js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^/]+)/guy.js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\\.]*)',  MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( pathToData(), FOLDERSTATIC) })
+            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
         app.listen(self.port,address=self.host)
 
@@ -582,6 +543,10 @@ class Guy:
         self._name = self.__class__.__name__
         self._id=self._name+"-"+uuid.uuid4().hex
         self.callbackExit=None      #public callback when "exit"
+        if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
+            self._folder=sys._MEIPASS
+        else:
+            self._folder = os.path.dirname( inspect.getfile( self.__class__ ) ) # *ME*
 
         self._routes={}
         for n, v in inspect.getmembers(self, inspect.ismethod):
@@ -702,10 +667,20 @@ class Guy:
     @property
     def cfg(self):
         class Proxy:
-            def __init__(self):
-                cfgfile=pathConfig()
-                logger.debug("Use config: %s",cfgfile)
-                self.__o=JDict( cfgfile )
+            def __init__(sself):
+                if ISANDROID:
+                    exepath=os.path.abspath(os.path.realpath(sys.argv[0]))
+                    path=os.path.join( os.path.dirname(exepath), "..", "config.json" )
+                else:
+                    exepath=os.path.abspath(os.path.realpath(sys.argv[0])) # or os.path.abspath(__main__.__file__)
+                    classpath= os.path.abspath( inspect.getfile( self.__class__ ) )
+                    if classpath!=exepath: # as module
+                        path=os.path.join( os.path.expanduser("~") , ".%s.json"%os.path.basename(exepath) )
+                    else: # as exe
+                        path = os.path.join( os.path.dirname(exepath), "config.json" )
+
+                logger.debug("Use config: %s",path)
+                sself.__o=JDict( path )
             def __setattr__(self,k,v):
                 if k.startswith("_"):
                     super(Proxy, self).__setattr__(k, v)
@@ -969,7 +944,7 @@ var self= {
                 asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
 
 
-            html=o._render( pathToData(),includeGuyJs=False)
+            html=o._render( self._folder,includeGuyJs=False)
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o.callbackExit=exit

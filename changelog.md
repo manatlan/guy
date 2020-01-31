@@ -1,4 +1,9 @@
+0.4.1: (31/01/2020)
+
+- FIX: trouble with venv (ability to find static data)
+
 0.4.0: (26/01/2020)
+
 - BIG CHANGES : 
     - Guy doesn't change/enforce the CWD !!!
     - Ability to be embbeded in a pip/package (see the how-to with poetry)
