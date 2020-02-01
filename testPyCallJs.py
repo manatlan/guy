@@ -39,13 +39,15 @@ class TestPyCallJs(guy.Guy):
     <button onclick="self.test_NF()">call js not found</button>
     <button onclick="self.test_ko()">call js ko</button>
     <button onclick="self.test_ko_async()">call async js ko</button>
-    <button onclick="self.test_alert()">test alert()</button>
+    <button onclick="self.test_prompt()">test promt()</button>
     <br/>
     """
     size=(500, 300) # set the size of the client window
 
-    async def test_alert(self): 
-        await self.js.alert("Python World!")
+    async def test_prompt(self): 
+        name = await self.js.prompt("Waht's your name ?")
+        print("==========js returns=========>",name)
+        return "ok prompt"
 
     async def test_ok(self): 
         r=await self.js.myjsmethod("Python World!",42)
