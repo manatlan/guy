@@ -21,7 +21,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.4.2"
+__version__="0.4.3"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -47,6 +47,7 @@ import logging
 class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
 FOLDERSTATIC="static"
+class JSException(Exception): pass
 
 handler = logging.StreamHandler()
 handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
@@ -265,12 +266,12 @@ async def emit(event,*args):
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     clients={}
+    returns={}
 
     def initialize(self, instance):
         self.instance=instance
 
-    def open(self):
-        page=self.get_query_argument("id")
+    def open(self,page):
         ichildren=self.instance._children.get(page,None)
         if ichildren:
             new=ichildren._initCopy( self )
@@ -287,14 +288,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         o = jLoads(message)
         logger.debug("WS RECEPT: %s",o)
-        method,args,uuid = o["command"],o["args"],o["uuid"]
+        method,args,uuid = o["command"],o.get("args"),o["uuid"]
 
         if method == "emit":
             event, *args = args
-            await emit( event, *args )
+            await emit( event, *args )  # emit all
+        elif method == "return":
+            logger.debug(" as JS Response %s : %s",uuid,args)
+            WebSocketHandler.returns[uuid]=args
         else:
             async def execution(function, uuid,mode):
-                logger.debug("Execute (%s) %s(%s)",mode,method,args)
+                logger.debug(" as Execute (%s) %s(%s)",mode,method,args)
                 try:
                     ret = await function()
                     ##############################################################
@@ -361,12 +365,12 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         #~ tornado.autoreload.watch( sys.argv[0] )
 
         app=tornado.web.Application([
-            (r'/ws',            WebSocketHandler,dict(instance=self.instance)),
-            (r'/_/(?P<url>.+)', ProxyHandler,dict(instance=self.instance)),
-            (r'/guy.js',        GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^/]+)/guy.js',        GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^\\.]*)',  MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',          tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
+            (r'/(?P<page>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
+            (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
+            (r'/guy.js',                    GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^/]+)/guy.js',    GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
+            (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
         app.listen(self.port,address=self.host)
 
@@ -676,6 +680,15 @@ class Guy:
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
 
     @property
+    def js(self):
+        class Proxy:
+            def __getattr__(sself,jsmethod):
+                async def _(*args):
+                    return await self._callMe(jsmethod,*args)
+                return _
+        return Proxy()        
+
+    @property
     def cfg(self):
         class Proxy:
             def __init__(sself):
@@ -721,7 +734,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/ws?id=%s"
+    var url=window.location.origin.replace("http","ws")+"/%s/ws"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -729,6 +742,40 @@ function setupWS( cbCnx ) {
       guy.log("** WS RECEPT:",r)
       if(r.uuid) // that's a response from call py !
           document.dispatchEvent( new CustomEvent('guy-'+r.uuid,{ detail: r} ) );
+      else if(r.jsmethod) { // call from py : self.js.<methodjs>()
+        
+          function sendBackReturn( response ) {
+            var cmd={
+                command:    "return",
+                args:       response,
+                uuid:       r.key,
+            };
+            ws.send( JSON.stringify(cmd) );
+            guy.log("call jsmethod from py:",r.jsmethod,r.args,"-->",cmd.args)
+          }
+
+          let jsmethod=window[r.jsmethod];
+          if(!jsmethod)
+            sendBackReturn( {error:"Unknown JS method "+r.jsmethod} )
+          else {
+            if(jsmethod.constructor.name == 'AsyncFunction') {
+                jsmethod.apply(window,r.args).then( function(x) {
+                    sendBackReturn( { value: x } );
+                }).catch(function(e) {
+                    sendBackReturn( { error: `JS Exception calling '${r.jsmethod}(...)' : ${e}` } );
+                })
+            }
+            else {
+                try {
+                    sendBackReturn( { value: jsmethod.apply(window,r.args) } );
+                }
+                catch(e) {
+                    sendBackReturn( { error: `JS Exception calling '${r.jsmethod}(...)' : ${e}` } );
+                }
+
+            }
+          }
+      }
       else if(r.event){ // that's an event from anywhere !
           document.dispatchEvent( new CustomEvent(r.event,{ detail: r.args } ) );
       }
@@ -922,6 +969,23 @@ var self= {
     async def emitMe(self,event, *args):
         logger.debug(">>> emitMe %s (%s)",event,args)
         await sockwrite(self._wsock,event=event,args=args)
+
+    async def _callMe(self,jsmethod, *args):
+        logger.debug(">>> callMe %s (%s)",jsmethod,args)
+        key=uuid.uuid4().hex
+        # send jsmethod
+        await sockwrite(self._wsock,jsmethod=jsmethod,args=args,key=key)
+        # wait the return (of the key)
+        while 1:
+            if key in WebSocketHandler.returns:
+                response=WebSocketHandler.returns[key]
+                del WebSocketHandler.returns[key]
+                if "error" in response:
+                    raise JSException(response["error"])
+                else:
+                    return response.get("value")
+            await asyncio.sleep(0.01)
+        
 
     def _getRoutage(self,method):
         function=None

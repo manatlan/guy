@@ -1,3 +1,6 @@
+0.4.3: (01/02/2020)
+ - EVOL: Py side : can call js method directly ( `await self.js.jsmethod(...)` )
+ 
 0.4.2: (31/01/2020)
  - FIX : trouble to find config folder when symbolic link used
  - EVOL: "init" can now be async too
