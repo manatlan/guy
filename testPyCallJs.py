@@ -45,7 +45,7 @@ class TestPyCallJs(guy.Guy):
     size=(500, 300) # set the size of the client window
 
     async def test_prompt(self): 
-        name = await self.js.prompt("Waht's your name ?")
+        name = await self.js.prompt("What's your name ?")
         print("==========js returns=========>",name)
         return "ok prompt"
 
