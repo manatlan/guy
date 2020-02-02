@@ -36,12 +36,6 @@ body {background: #EEE}
     })
 </script>
     """
-    #~ async def doTheJob(self,pb,speed,   emitMe):
-        #~ for i in range(101):
-            #~ await asyncio.sleep(speed)    # simulate the job
-            #~ await emitMe("percent",pb,i)
-        #~ return "Job Done %s!" % pb
-
     async def doTheJob(self,pb,speed):
         for i in range(101):
             await asyncio.sleep(speed)    # simulate the job
@@ -51,5 +45,4 @@ body {background: #EEE}
 
 if __name__=="__main__":
     d=progress()
-    #~ d.run()
     d.serve()
