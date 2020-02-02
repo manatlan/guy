@@ -8,8 +8,8 @@ from guy import Guy
 class Simple(Guy):
     """<button onclick="self.test()">test</button>"""
 
-    def test(self):
-        print("hello world")
+    async def test(self):
+        print("Your name is", await self.js.prompt("What's your name ?") )
 
 if __name__ == "__main__":
     app=Simple()
