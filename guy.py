@@ -180,6 +180,7 @@ class MainHandler(tornado.web.RequestHandler):
                 chpage=self.instance._children.get(page,None)
                 if chpage is None:
                     chpage=self.instanciate(page)
+                    self.instance._children[page]=chpage
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
                     self.render(chpage)
@@ -206,8 +207,7 @@ class MainHandler(tornado.web.RequestHandler):
             logger.debug("MainHandler: Auto instanciate (%s)",page)
             x=inspect.signature(gclass.__init__)
             args=[self.get_argument(i) for i in x.parameters if i!="self"]
-            self.instance._children[page]=gclass(*args)
-            return self.instance._children[page]
+            return gclass(*args)
 
     def render(self,instance):
         """ write rendered instance """
