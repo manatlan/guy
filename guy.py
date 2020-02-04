@@ -211,7 +211,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     def render(self,instance):
         """ write rendered instance """
-        self.write(instance._render( instance._folder ))
+        self.write(instance._render())
 
     async def _callhttp(self,page):
         if not await callhttp(self,page):
@@ -1025,7 +1025,7 @@ var self= {
                 asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
 
 
-            html=o._render( self._folder,includeGuyJs=False)
+            html=o._render( includeGuyJs=False )
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o.callbackExit=exit
@@ -1046,7 +1046,8 @@ var self= {
 
         return ret
 
-    def _render(self,path,includeGuyJs=True):
+    def _render(self,includeGuyJs=True):
+        path=self._folder
         html=self.__doc__
 
         def rep(x):
