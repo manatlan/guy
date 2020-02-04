@@ -53,7 +53,9 @@ handler = logging.StreamHandler()
 handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
 logger = logging.getLogger("guy")
 logger.addHandler(handler)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
+
+handler.setLevel(logging.ERROR)
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -164,6 +166,7 @@ class GuyJSHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(status_code=404)
 
 class MainHandler(tornado.web.RequestHandler):
+
     def initialize(self, instance):
         self.instance=instance
     async def get(self,page): # page doesn't contains a dot '.'
@@ -196,12 +199,14 @@ class MainHandler(tornado.web.RequestHandler):
     async def patch(self,page): # page doesn't contains a dot '.'
         await self._callhttp(page)
 
-    def instanciate(self,page,*a,**k):
+    def instanciate(self,page):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
         gclass=declared.get(page,None)
         if gclass: # auto instanciate !
             logger.debug("MainHandler: Auto instanciate (%s)",page)
-            self.instance._children[page]=gclass(*a,**k)
+            x=inspect.signature(gclass.__init__)
+            args=[self.get_argument(i) for i in x.parameters if i!="self"]
+            self.instance._children[page]=gclass(*args)
             return self.instance._children[page]
 
     def render(self,instance):
@@ -278,9 +283,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         else:
             new=self.instance._initCopy( self )
         WebSocketHandler.clients[self]=new
+        print("****** WS on", id(self))
 
     def on_close(self):
         del WebSocketHandler.clients[self]
+        print("****** WS off", id(self))
 
     async def on_message(self, message):
 
@@ -365,10 +372,9 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         #~ tornado.autoreload.watch( sys.argv[0] )
 
         app=tornado.web.Application([
-            (r'/(?P<page>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/guy.js',                    GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^/]+)/guy.js',    GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^/]+)/js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
@@ -603,7 +609,7 @@ class Guy:
 
     def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
@@ -630,7 +636,7 @@ class Guy:
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self )
         ws.start()
@@ -648,7 +654,7 @@ class Guy:
 
     def serve(self,port=8000,log=False,open=True):
         """ Run the guy's app for multiple clients (web/server mode) """
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port )
         ws.start()
@@ -1057,7 +1063,7 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/guy.js"'%page,x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%page,x)
 
         if html:
             if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
