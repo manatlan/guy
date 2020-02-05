@@ -1,8 +1,8 @@
 import pytest
 
-@pytest.fixture(params=["run","runCef","serve"])
+# @pytest.fixture(params=["run","runCef","serve"])
 # @pytest.fixture(params=["run","runCef"])
-# @pytest.fixture(params=["run"])
+@pytest.fixture(params=["run"])
 # @pytest.fixture(params=["serve"])
 # @pytest.fixture(params=["runCef"])
 def runner(request):
