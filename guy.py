@@ -215,6 +215,7 @@ class MainHandler(tornado.web.RequestHandler):
         if gclass: # auto instanciate !
             logger.debug("MainHandler: Auto instanciate (%s)",page)
             x=inspect.signature(gclass.__init__)
+            print("==================",x)
             args=[self.get_argument(i) for i in x.parameters if i!="self"]
             return gclass(*args)
 
@@ -579,7 +580,7 @@ class Guy:
     _children={}
 
     size=None
-    def __init__(self,*a,**k):
+    def __init__(self):
         self._name = self.__class__.__name__
         self._id=self._name+"-"+uuid.uuid4().hex
         self._callbackExit=None      #public callback when "exit"
