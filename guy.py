@@ -153,37 +153,47 @@ class JDict:
 class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
-    async def get(self,page=""):
-        if page==self.instance._name or page=="":
-            logger.debug("GuyJSHandler: Render Main guy.js (%s)",self.instance._name)
-            self.write(self.instance._renderJs())
+    async def get(self,id):
+        o=INST.get( int(id) )
+        if o:
+            self.write(o._renderJs())
         else:
-            chpage=self.instance._children.get(page,None)
-            if chpage is not None:
-                logger.debug("GuyJSHandler: Render Children guy.js (%s)",page)
-                self.write(chpage._renderJs(asChild=True))
-            else:
-                raise tornado.web.HTTPError(status_code=404)
+            raise tornado.web.HTTPError(status_code=404)
+        # if page==self.instance._name or page=="":
+        #     logger.debug("GuyJSHandler: Render Main guy.js (%s)",self.instance._name)
+        #     self.write(self.instance._renderJs())
+        # else:
+        #     chpage=self.instance._children.get(page,None)
+        #     if chpage is not None:
+        #         logger.debug("GuyJSHandler: Render Children guy.js (%s)",page)
+        #         self.write(chpage._renderJs(asChild=True))
+        #     else:
+        #         raise tornado.web.HTTPError(status_code=404)
 
+INST={}                
+                
 class MainHandler(tornado.web.RequestHandler):
 
     def initialize(self, instance):
         self.instance=instance
     async def get(self,page): # page doesn't contains a dot '.'
+        print("==",INST.keys())
         #####################################################
         if not await callhttp(self,page):
         #####################################################
             if page=="" or page==self.instance._name:
                 logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
-                self.render(self.instance)
+                # INST[id(self.instance)]=self.instance
+                self.write( self.instance._render() )
             else:
-                chpage=self.instance._children.get(page,None)
-                if chpage is None:
-                    chpage=self.instanciate(page)
-                    self.instance._children[page]=chpage
+                chpage=self.instanciate(page)
+                # chpage=self.instance._children.get(page,None)
+                # if chpage is None:
+                #     chpage=self.instanciate(page)
+                #     self.instance._children[page]=chpage
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
-                    self.render(chpage)
+                    self.write( chpage._render() )
                 else:
                     raise tornado.web.HTTPError(status_code=404)
 
@@ -208,10 +218,6 @@ class MainHandler(tornado.web.RequestHandler):
             x=inspect.signature(gclass.__init__)
             args=[self.get_argument(i) for i in x.parameters if i!="self"]
             return gclass(*args)
-
-    def render(self,instance):
-        """ write rendered instance """
-        self.write(instance._render())
 
     async def _callhttp(self,page):
         if not await callhttp(self,page):
@@ -276,18 +282,25 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, instance):
         self.instance=instance
 
-    def open(self,page):
-        ichildren=self.instance._children.get(page,None)
-        if ichildren:
-            new=ichildren._initCopy( self )
-        else:
-            new=self.instance._initCopy( self )
-        WebSocketHandler.clients[self]=new
-        print("****** WS on", id(self))
+    def open(self,id):
+        print(INST.keys())
+        
+        o=INST.get( int(id) )
+        if o:
+          o._wsock = self
+          o._doInit() # provok l'appel de l'init
+          # ichildren=self.instance._children.get(page,None)
+          # if ichildren:
+          #     new=ichildren._initCopy( self )
+          # else:
+          #     new=self.instance._initCopy( self )
+          WebSocketHandler.clients[self]=o
 
     def on_close(self):
+        o=WebSocketHandler.clients[self]
+        if id(o)!=id(self.instance): # avoid to remove the main instance
+          del INST[id(o)]
         del WebSocketHandler.clients[self]
-        print("****** WS off", id(self))
 
     async def on_message(self, message):
 
@@ -373,8 +386,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^/]+)/js',        GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)/js',        GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
@@ -584,27 +597,27 @@ class Guy:
         self._routes["cfg_get"]=self.cfg_get
         self._routes["cfg_set"]=self.cfg_set
         self._routes["exit"]=self.exit
+        INST[id(self)]=self
 
+    def _doInit(self):
+#         logger.debug("CLONE %s",self._name)
+#         keys=self._routes.keys()
+#         self._routes={}
+#         new = copy.copy(self)
+#         for n, v in inspect.getmembers(new):
+#             if n in keys:
+#                 if inspect.isfunction(v):
+#                     new._routes[n]=types.MethodType( v, new ) #rebound !
+#                     setattr(new,n,types.MethodType( v, new )) #rebound !
+#                 else:
+#                     new._routes[n]=v
 
-    def _initCopy(self,wsock):
-        logger.debug("CLONE %s",self._name)
-        keys=self._routes.keys()
-        self._routes={}
-        new = copy.copy(self)
-        for n, v in inspect.getmembers(new):
-            if n in keys:
-                if inspect.isfunction(v):
-                    new._routes[n]=types.MethodType( v, new ) #rebound !
-                    setattr(new,n,types.MethodType( v, new )) #rebound !
-                else:
-                    new._routes[n]=v
+#         new._wsock = wsock
+#         self._runned = new
 
-        new._wsock = wsock
-        self._runned = new
+        asyncio.ensure_future( doInit(self) )
 
-        asyncio.ensure_future( doInit(new) )
-
-        return new
+        return self
 
 
     def run(self,log=False):
@@ -962,7 +975,7 @@ var self= {
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
-        self._name, # for the socket
+        id(self), # for the socket
         "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
@@ -1064,7 +1077,7 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%page,x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%id(self),x)
 
         if html:
             if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
