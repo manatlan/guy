@@ -572,7 +572,7 @@ async def doInit( instance ):
 
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
-    _runned=None    # (only the main instance set this)
+    # _runned=None    # (only the main instance set this)
     _children={}
 
     size=None
@@ -645,7 +645,7 @@ class Guy:
             ws.exit()
             ws.join()
 
-        return self._runned
+        return self
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
@@ -662,7 +662,7 @@ class Guy:
             print("-Process stopped")
         ws.exit()
         ws.join()
-        return self._runned
+        return self
 
 
     def serve(self,port=8000,log=False,open=True):
@@ -690,7 +690,7 @@ class Guy:
         except KeyboardInterrupt:
             print("-Process stopped")
         ws.exit()
-        return self._runned #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
+        return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
         if self.callbackExit: self.callbackExit()
