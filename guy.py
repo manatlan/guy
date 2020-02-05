@@ -568,7 +568,7 @@ async def doInit( instance ):
             else:
                 self_init( instance )
     except TypeError as e:
-        pass
+        print(e)
 
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
