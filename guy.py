@@ -562,7 +562,9 @@ class ChromeAppCef:
 async def doInit( instance ):
     try:
         if hasattr(instance,"init"):
+            print(instance,dir(instance))
             self_init = getattr(instance, "init")
+            print(instance,inspect.signature(self_init))
             if asyncio.iscoroutinefunction( self_init ):
                 await self_init( instance )
             else:
