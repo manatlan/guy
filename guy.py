@@ -21,7 +21,7 @@
 #TODO:
 # cookiejar
 
-__version__="0.4.3"
+__version__="0.X.X"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -50,7 +50,7 @@ FOLDERSTATIC="static"
 class JSException(Exception): pass
 
 handler = logging.StreamHandler()
-handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
+handler.setFormatter( logging.Formatter('-%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
 logger = logging.getLogger("guy")
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
@@ -183,7 +183,6 @@ class MainHandler(tornado.web.RequestHandler):
         #####################################################
             if page=="" or page==self.instance._name:
                 logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
-                # INST[id(self.instance)]=self.instance
                 self.write( self.instance._render() )
             else:
                 chpage=self.instanciate(page)
@@ -264,7 +263,7 @@ async def sockwrite(wsock, **kwargs ):
         try:
             await wsock.write_message(jDumps(kwargs))
         except Exception as e:
-            logger.error("Socket write : can't")
+            logger.error("Socket write : can't:%s",wsock)
             if wsock in WebSocketHandler.clients: del WebSocketHandler.clients[wsock]
 
 
@@ -287,17 +286,21 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         
         o=INST.get( int(id) )
         if o:
-          o._wsock = self
-          o._doInit() # provok l'appel de l'init
+          print("Connect",o._name)
+          o._connect( self ) # provok l'appel de l'init
+          
           # ichildren=self.instance._children.get(page,None)
           # if ichildren:
           #     new=ichildren._initCopy( self )
           # else:
           #     new=self.instance._initCopy( self )
           WebSocketHandler.clients[self]=o
+        else:
+          print("CAN't Connect",o)
 
     def on_close(self):
         o=WebSocketHandler.clients[self]
+        print("Disconnect",o._name)
         if id(o)!=id(self.instance): # avoid to remove the main instance
           del INST[id(o)]
         del WebSocketHandler.clients[self]
@@ -562,13 +565,11 @@ class ChromeAppCef:
 async def doInit( instance ):
     try:
         if hasattr(instance,"init"):
-            print(instance,dir(instance))
             self_init = getattr(instance, "init")
-            print(instance,inspect.signature(self_init))
             if asyncio.iscoroutinefunction( self_init ):
-                await self_init( instance )
+                await self_init(  )
             else:
-                self_init( instance )
+                self_init(  )
     except TypeError as e:
         print(e)
 
@@ -581,7 +582,7 @@ class Guy:
     def __init__(self,*a,**k):
         self._name = self.__class__.__name__
         self._id=self._name+"-"+uuid.uuid4().hex
-        self.callbackExit=None      #public callback when "exit"
+        self._callbackExit=None      #public callback when "exit"
         if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
             self._folder=sys._MEIPASS
         else:
@@ -599,9 +600,24 @@ class Guy:
         self._routes["cfg_get"]=self.cfg_get
         self._routes["cfg_set"]=self.cfg_set
         self._routes["exit"]=self.exit
-        INST[id(self)]=self
 
-    def _doInit(self):
+
+    def _connect(self,wsock):
+        self._wsock = wsock
+
+        ## REBIND ################################################################
+        ## REBIND ################################################################
+        ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
+        for n, v in inspect.getmembers(self):
+            if not n.startswith("_") and inspect.isfunction(v):
+                print("::: REBIND method %s.%s()" % (self._name,n))
+                setattr(self,n,types.MethodType( v, self )) #rebound !
+        ## REBIND ################################################################
+        ## REBIND ################################################################
+        ## REBIND ################################################################
+        
+        asyncio.ensure_future( doInit(self) )
+
 #         logger.debug("CLONE %s",self._name)
 #         keys=self._routes.keys()
 #         self._routes={}
@@ -617,9 +633,7 @@ class Guy:
 #         new._wsock = wsock
 #         self._runned = new
 
-        asyncio.ensure_future( doInit(self) )
 
-        return self
 
 
     def run(self,log=False):
@@ -638,7 +652,7 @@ class Guy:
                 ws.exit()
                 app.exit()
 
-            self.callbackExit = exit
+            self._callbackExit = exit
             try:
                 app.wait() # block
             except KeyboardInterrupt:
@@ -657,7 +671,7 @@ class Guy:
         ws.start()
 
         app=ChromeAppCef(ws.startPage,self.size)
-        self.callbackExit = app.exit
+        self._callbackExit = app.exit
         try:
             app.wait() # block
         except KeyboardInterrupt:
@@ -677,7 +691,7 @@ class Guy:
         def exit():
             ws.exit()
 
-        self.callbackExit = exit
+        self._callbackExit = exit
         print("Running", ws.startPage )
 
         if open: #auto open browser
@@ -695,7 +709,7 @@ class Guy:
         return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self.callbackExit: self.callbackExit()
+        if self._callbackExit: self._callbackExit()
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
@@ -1043,7 +1057,7 @@ var self= {
             html=o._render( includeGuyJs=False )
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
-            o.callbackExit=exit
+            o._callbackExit=exit
             asyncio.ensure_future( doInit(o) )
             
             obj=dict(
@@ -1062,6 +1076,8 @@ var self= {
         return ret
 
     def _render(self,includeGuyJs=True):
+        INST[id(self)]=self
+        
         path=self._folder
         html=self.__doc__
 
@@ -1098,7 +1114,7 @@ var self= {
     @property
     def _dict(self):
         obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
-        for i in ["callbackExit","__doc__","_children","size"]:
+        for i in ["_callbackExit","__doc__","_children","size"]:
             if i in obj: del obj[i]
         return obj
 
@@ -1144,7 +1160,7 @@ def runAndroid(ga):
                 App.get_running_app().stop()
                 os._exit(0)
 
-            guyWindow.callbackExit = exit
+            guyWindow._callbackExit = exit
 
             self.ws=WebServer( guyWindow )
             self.ws.start()
