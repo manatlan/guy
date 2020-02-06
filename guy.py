@@ -19,6 +19,7 @@
 #python3.7 -m pytest --cov-report html --cov=guy .
 
 #TODO:
+# logger for each part
 # cookiejar
 
 __version__="0.X.X"
@@ -254,8 +255,7 @@ async def sockwrite(wsock, **kwargs ):
 
 async def emit(event,*args):
     logger.debug(">>> Emit ALL: %s (%s)",event,args)
-    clients=list( WebSocketHandler.clients.keys() )
-    for i in clients:
+    for i in list( WebSocketHandler.clients.keys() ):
         await sockwrite(i,event=event,args=args)
 
 
