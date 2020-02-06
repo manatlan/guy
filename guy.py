@@ -79,6 +79,7 @@ async def callhttp(web,path): # web: RequestHandler
             else:
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
+                ret._callbackExit = web.instance._callbackExit
                 web.write( ret._render() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
@@ -159,14 +160,13 @@ class GuyJSHandler(tornado.web.RequestHandler):
         else:
             raise tornado.web.HTTPError(status_code=404)
 
-INST={}                
-                
+INST={}
+
 class MainHandler(tornado.web.RequestHandler):
 
     def initialize(self, instance):
         self.instance=instance
     async def get(self,page): # page doesn't contains a dot '.'
-        print("==",INST.keys())
         #####################################################
         if not await callhttp(self,page):
         #####################################################
@@ -267,19 +267,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.instance=instance
 
     def open(self,id):
-        print(INST.keys())
-        
         o=INST.get( id )
         if o:
-          print("Connect",id)
+          logger.debug("Connect %s",id)
           o._connect( self ) # provok l'appel de l'init
           WebSocketHandler.clients[self]=o
         else:
-          print("CAN't Connect",id)
+          logger.debug("CAN't Connect %s",id)
 
     def on_close(self):
         o=WebSocketHandler.clients[self]
-        print("Disconnect",o._id)
+        logger.debug("Disconnect %s",o._id)
         if o._id!=self.instance._id: # avoid to remove the main instance
           del INST[o._id]
         del WebSocketHandler.clients[self]
@@ -525,7 +523,7 @@ class ChromeAppCef:
                     try:
                         cef.WindowUtils.SetTitle(browser, title)
                     except AttributeError:
-                        logger.warn(
+                        logger.warning(
                             "**WARNING** : title changed '%s' not work on linux",title
                         )
 
@@ -544,15 +542,9 @@ class ChromeAppCef:
 
 
 async def doInit( instance ):
-    instance._rebind()
+    instance._rebind() # WTF ?: need to call this
     if hasattr(instance,"init"):
         self_init = getattr(instance, "init")
-        
-        #~ #=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°
-        #~ if inspect.isfunction(self_init):
-            #~ self_init = types.MethodType( self_init, instance ) #rebound !
-        #~ #=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°
-            
         if asyncio.iscoroutinefunction( self_init ):
             await self_init(  )
         else:
@@ -561,7 +553,6 @@ async def doInit( instance ):
 
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
-    # _runned=None    # (only the main instance set this)
 
     size=None
     def __init__(self):
@@ -588,40 +579,20 @@ class Guy:
 
 
     def _rebind(self):
-        print("############################################################## REBIND")
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
         for n, v in inspect.getmembers(self):
             if not n.startswith("_") and inspect.isfunction(v):
-                print("::: REBIND method %s.%s()" % (self._name,n))
+                logger.debug("::: REBIND method %s.%s()" % (self._name,n))
                 setattr(self,n,types.MethodType( v, self )) #rebound !
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################
 
     def _connect(self,wsock):
-        self._wsock = wsock
-
-        #~ self._rebind()
+        self._wsock = wsock # save the current socket for this instance !!!
         asyncio.ensure_future( doInit(self) )
-
-#         logger.debug("CLONE %s",self._name)
-#         keys=self._routes.keys()
-#         self._routes={}
-#         new = copy.copy(self)
-#         for n, v in inspect.getmembers(new):
-#             if n in keys:
-#                 if inspect.isfunction(v):
-#                     new._routes[n]=types.MethodType( v, new ) #rebound !
-#                     setattr(new,n,types.MethodType( v, new )) #rebound !
-#                 else:
-#                     new._routes[n]=v
-
-#         new._wsock = wsock
-#         self._runned = new
-
-
 
 
     def run(self,log=False):
@@ -697,7 +668,10 @@ class Guy:
         return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self._callbackExit: self._callbackExit()
+        if self._callbackExit:
+            self._callbackExit()
+        else:
+            logger.error("'%s' has not _callbackExit !" % self._id)
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
@@ -709,7 +683,7 @@ class Guy:
                 async def _(*args):
                     return await self._callMe(jsmethod,*args)
                 return _
-        return Proxy()        
+        return Proxy()
 
     @property
     def cfg(self):
@@ -766,7 +740,7 @@ function setupWS( cbCnx ) {
       if(r.uuid) // that's a response from call py !
           document.dispatchEvent( new CustomEvent('guy-'+r.uuid,{ detail: r} ) );
       else if(r.jsmethod) { // call from py : self.js.<methodjs>()
-        
+
           function sendBackReturn( response ) {
             var cmd={
                 command:    "return",
@@ -1008,7 +982,7 @@ var self= {
                 else:
                     return response.get("value")
             await asyncio.sleep(0.01)
-        
+
 
     def _getRoutage(self,method):
         function=None
@@ -1043,7 +1017,7 @@ var self= {
 
             o._callbackExit=exit
             asyncio.ensure_future( doInit(o) )
-            
+
             obj=dict(
                 id=o._id,
                 name=o._name,
@@ -1061,7 +1035,7 @@ var self= {
 
     def _render(self,includeGuyJs=True):
         INST[self._id]=self # When render -> save the instance in the pool (INST)
-        
+
         path=self._folder
         html=self.__doc__
 
