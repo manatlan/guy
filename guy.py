@@ -78,9 +78,17 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=await method(web,*g.groups())
             else:
                 ret=method(web,*g.groups())
-            if isinstance(ret,Guy):
-                web.instance._children[ret._name]=ret
-                ret._render()
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            # if isinstance(ret,Guy):
+            #     web.instance._children[ret._name]=ret
+            #     ret._render()
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -390,8 +398,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)/js',        GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)/ws',          WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)/js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
@@ -582,7 +590,7 @@ async def doInit( instance ):
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
     # _runned=None    # (only the main instance set this)
-    _children={}
+    #_children={}
 
     size=None
     def __init__(self):
@@ -609,7 +617,7 @@ class Guy:
 
 
     def _rebind(self):
-        print("############################################################## REBING")
+        print("############################################################## REBIND")
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
@@ -1035,10 +1043,12 @@ var self= {
         function=None
         if "." in method:
             id,method = method.split(".")
-            for i in self._children.values():
-                if i._id == id:
-                    logger.debug("METHOD CHILD %s %s",i._name,method)
-                    function=i._routes[method]
+            i=INST.get(id)
+            function=i._routes[method]
+            # for i in self._children.values():
+            #     if i._id == id:
+            #         logger.debug("METHOD CHILD %s %s",i._name,method)
+            #         function=i._routes[method]
         else:
             logger.debug("METHOD SELF %s",method)
             function=self._routes[method]
@@ -1051,7 +1061,7 @@ var self= {
 
         if isinstance(ret,Guy):
             ################################################################
-            self._children[ ret._name ]=ret
+            #self._children[ ret._name ]=ret
             o=ret
 
             routes=[k for k in o._routes.keys() if not k.startswith("_")]
@@ -1086,7 +1096,7 @@ var self= {
         return ret
 
     def _render(self,includeGuyJs=True):
-        INST[self._id]=self
+        INST[self._id]=self # When render -> save the instance in the pool (INST)
         
         path=self._folder
         html=self.__doc__
@@ -1124,7 +1134,7 @@ var self= {
     @property
     def _dict(self):
         obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
-        for i in ["_callbackExit","__doc__","_children","size"]:
+        for i in ["_callbackExit","__doc__","size"]:
             if i in obj: del obj[i]
         return obj
 
