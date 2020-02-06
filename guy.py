@@ -80,7 +80,7 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
                 web.instance._children[ret._name]=ret
-                web.render( ret )
+                ret._render()
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -154,7 +154,7 @@ class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
     async def get(self,id):
-        o=INST.get( int(id) )
+        o=INST.get( id )
         if o:
             self.write(o._renderJs())
         else:
@@ -285,7 +285,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self,id):
         print(INST.keys())
         
-        o=INST.get( int(id) )
+        o=INST.get( id )
         if o:
           print("Connect",o._name)
           o._connect( self ) # provok l'appel de l'init
@@ -302,8 +302,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         o=WebSocketHandler.clients[self]
         print("Disconnect",o._name)
-        if id(o)!=id(self.instance): # avoid to remove the main instance
-          del INST[id(o)]
+        if o._id!=self.instance._id: # avoid to remove the main instance
+          del INST[o._id]
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
@@ -564,15 +564,19 @@ class ChromeAppCef:
 
 
 async def doInit( instance ):
-    try:
-        if hasattr(instance,"init"):
-            self_init = getattr(instance, "init")
-            if asyncio.iscoroutinefunction( self_init ):
-                await self_init(  )
-            else:
-                self_init(  )
-    except TypeError as e:
-        print(e)
+    instance._rebind()
+    if hasattr(instance,"init"):
+        self_init = getattr(instance, "init")
+        
+        #~ #=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°
+        #~ if inspect.isfunction(self_init):
+            #~ self_init = types.MethodType( self_init, instance ) #rebound !
+        #~ #=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°=°
+            
+        if asyncio.iscoroutinefunction( self_init ):
+            await self_init(  )
+        else:
+            self_init(  )
 
 
 class Guy:
@@ -583,7 +587,7 @@ class Guy:
     size=None
     def __init__(self):
         self._name = self.__class__.__name__
-        self._id=self._name+"-"+uuid.uuid4().hex
+        self._id=self._name+"-"+str(id(self))
         self._callbackExit=None      #public callback when "exit"
         if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
             self._folder=sys._MEIPASS
@@ -604,9 +608,8 @@ class Guy:
         self._routes["exit"]=self.exit
 
 
-    def _connect(self,wsock):
-        self._wsock = wsock
-
+    def _rebind(self):
+        print("############################################################## REBING")
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
@@ -617,7 +620,11 @@ class Guy:
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################
-        
+
+    def _connect(self,wsock):
+        self._wsock = wsock
+
+        #~ self._rebind()
         asyncio.ensure_future( doInit(self) )
 
 #         logger.debug("CLONE %s",self._name)
@@ -993,7 +1000,7 @@ var self= {
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
-        id(self), # for the socket
+        self._id, # for the socket
         "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
@@ -1060,6 +1067,7 @@ var self= {
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o._callbackExit=exit
+            #~ self._rebind()            
             asyncio.ensure_future( doInit(o) )
             
             obj=dict(
@@ -1078,7 +1086,7 @@ var self= {
         return ret
 
     def _render(self,includeGuyJs=True):
-        INST[id(self)]=self
+        INST[self._id]=self
         
         path=self._folder
         html=self.__doc__
@@ -1097,7 +1105,7 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%id(self),x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%self._id,x)
 
         if html:
             if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
@@ -1192,4 +1200,3 @@ if __name__ == "__main__":
     # from testPrompt import Win as GuyApp
     # GuyApp().run()
     pass
-
