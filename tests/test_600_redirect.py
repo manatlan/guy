@@ -41,3 +41,31 @@ def test_redirect(runner):
     t=W1()
     r=runner(t)
     assert r.ok
+
+def test_redirect_exit(runner): # same concept as test_600_redirect.py ... but with better url
+    db={}
+    class W1(Guy):
+        __doc__="""
+        <script>
+        guy.init( async function() {
+            document.location.href="/W2?param=42"   // the param is ignored
+        })
+        </script>
+        1
+        """
+
+    class W2(Guy):
+        __doc__="""
+        <script>
+        guy.init( async function() {
+            self.exit()
+        })
+        </script>
+        2
+        """
+
+    t=W1()
+
+    runner(t) # the returned instance is the main (t)
+    assert True # but w2 has quit the main instance
+

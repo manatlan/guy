@@ -24,7 +24,7 @@ def test_hook_with_classic_fetch(runner):
     assert r.retour == "item 42"
 
 
-def test_hook_with_classic_fetch(runner): # same concept as test_600_redirect.py ... but with better url
+def test_hook_redirect(runner): # same concept as test_600_redirect.py ... but with better url
     db={}
 
     class Simplest(Guy):

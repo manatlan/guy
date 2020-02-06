@@ -16,7 +16,7 @@
 #    more: https://github.com/manatlan/guy
 # #############################################################################
 
-#python3 -m pytest --cov-report html --cov=guy .
+#python3.7 -m pytest --cov-report html --cov=guy .
 
 #TODO:
 # cookiejar
@@ -175,6 +175,7 @@ class MainHandler(tornado.web.RequestHandler):
                 self.write( self.instance._render() )
             else:
                 chpage=self.instanciate(page) # auto-instanciate each time !
+                chpage._callbackExit = self.instance._callbackExit
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
                     self.write( chpage._render() )
@@ -197,11 +198,10 @@ class MainHandler(tornado.web.RequestHandler):
     def instanciate(self,page):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
         gclass=declared[page]
-        if gclass: # auto instanciate !
-            logger.debug("MainHandler: Auto instanciate (%s)",page)
-            x=inspect.signature(gclass.__init__)
-            args=[self.get_argument(i) for i in x.parameters if i!="self"]
-            return gclass(*args)
+        logger.debug("MainHandler: Auto instanciate (%s)",page)
+        x=inspect.signature(gclass.__init__)
+        args=[self.get_argument(i) for i in list(x.parameters)[1:]]
+        return gclass(*args)
 
     async def _callhttp(self,page):
         if not await callhttp(self,page):
@@ -671,7 +671,7 @@ class Guy:
         if self._callbackExit:
             self._callbackExit()
         else:
-            logger.error("'%s' has not _callbackExit !" % self._id)
+            logger.warning("'%s' has not _callbackExit !" % self._id)
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
