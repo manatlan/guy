@@ -78,17 +78,8 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=await method(web,*g.groups())
             else:
                 ret=method(web,*g.groups())
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            # if isinstance(ret,Guy):
-            #     web.instance._children[ret._name]=ret
-            #     ret._render()
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
-            ## /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ TODO
+            if isinstance(ret,Guy):
+                web.write( ret._render() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -167,16 +158,6 @@ class GuyJSHandler(tornado.web.RequestHandler):
             self.write(o._renderJs())
         else:
             raise tornado.web.HTTPError(status_code=404)
-        # if page==self.instance._name or page=="":
-        #     logger.debug("GuyJSHandler: Render Main guy.js (%s)",self.instance._name)
-        #     self.write(self.instance._renderJs())
-        # else:
-        #     chpage=self.instance._children.get(page,None)
-        #     if chpage is not None:
-        #         logger.debug("GuyJSHandler: Render Children guy.js (%s)",page)
-        #         self.write(chpage._renderJs(asChild=True))
-        #     else:
-        #         raise tornado.web.HTTPError(status_code=404)
 
 INST={}                
                 
@@ -193,11 +174,7 @@ class MainHandler(tornado.web.RequestHandler):
                 logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
                 self.write( self.instance._render() )
             else:
-                chpage=self.instanciate(page)
-                # chpage=self.instance._children.get(page,None)
-                # if chpage is None:
-                #     chpage=self.instanciate(page)
-                #     self.instance._children[page]=chpage
+                chpage=self.instanciate(page) # auto-instanciate each time !
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
                     self.write( chpage._render() )
@@ -219,11 +196,10 @@ class MainHandler(tornado.web.RequestHandler):
 
     def instanciate(self,page):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
-        gclass=declared.get(page,None)
+        gclass=declared[page]
         if gclass: # auto instanciate !
             logger.debug("MainHandler: Auto instanciate (%s)",page)
             x=inspect.signature(gclass.__init__)
-            print("==================",x)
             args=[self.get_argument(i) for i in x.parameters if i!="self"]
             return gclass(*args)
 
@@ -295,21 +271,15 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         
         o=INST.get( id )
         if o:
-          print("Connect",o._name)
+          print("Connect",id)
           o._connect( self ) # provok l'appel de l'init
-          
-          # ichildren=self.instance._children.get(page,None)
-          # if ichildren:
-          #     new=ichildren._initCopy( self )
-          # else:
-          #     new=self.instance._initCopy( self )
           WebSocketHandler.clients[self]=o
         else:
-          print("CAN't Connect",o)
+          print("CAN't Connect",id)
 
     def on_close(self):
         o=WebSocketHandler.clients[self]
-        print("Disconnect",o._name)
+        print("Disconnect",o._id)
         if o._id!=self.instance._id: # avoid to remove the main instance
           del INST[o._id]
         del WebSocketHandler.clients[self]
@@ -415,8 +385,10 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         self.loop.run_until_complete(_waitExit())
 
         # gracefull death
-        ## tasks = asyncio.all_tasks(self.loop) #py37
-        tasks = asyncio.Task.all_tasks(self.loop) #py35
+        try:
+            tasks = asyncio.all_tasks(self.loop) #py37
+        except:
+            tasks = asyncio.Task.all_tasks(self.loop) #py35
         for task in tasks: task.cancel()
         try:
             self.loop.run_until_complete(asyncio.gather(*tasks))
@@ -590,7 +562,6 @@ async def doInit( instance ):
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
     # _runned=None    # (only the main instance set this)
-    #_children={}
 
     size=None
     def __init__(self):
@@ -1043,12 +1014,7 @@ var self= {
         function=None
         if "." in method:
             id,method = method.split(".")
-            i=INST.get(id)
-            function=i._routes[method]
-            # for i in self._children.values():
-            #     if i._id == id:
-            #         logger.debug("METHOD CHILD %s %s",i._name,method)
-            #         function=i._routes[method]
+            function=INST.get(id)._routes[method]
         else:
             logger.debug("METHOD SELF %s",method)
             function=self._routes[method]
@@ -1061,7 +1027,6 @@ var self= {
 
         if isinstance(ret,Guy):
             ################################################################
-            #self._children[ ret._name ]=ret
             o=ret
 
             routes=[k for k in o._routes.keys() if not k.startswith("_")]
@@ -1077,7 +1042,6 @@ var self= {
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
             o._callbackExit=exit
-            #~ self._rebind()            
             asyncio.ensure_future( doInit(o) )
             
             obj=dict(
