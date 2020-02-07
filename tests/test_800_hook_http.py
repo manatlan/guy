@@ -24,8 +24,27 @@ def test_hook_with_classic_fetch(runner):
     assert r.retour == "item 42"
 
 
+
+def test_hook_with_guy_fetch(runner):
+    class T(Guy):
+        __doc__="""Hello
+        <script>
+        async function testHook() {
+            var r=await guy.fetch("/item/42") // not needed in that case (no cors trouble!)
+            return await r.text()
+        }
+        </script>
+        """
+        async def init(self):
+            self.retour =await self.js.testHook()
+            self.exit()
+
+    t=T()
+    r=runner(t)
+    assert r.retour == "item 42"
+
+
 def test_hook_redirect(runner): # same concept as test_600_redirect.py ... but with better url
-    db={}
 
     class Simplest(Guy):
         """
@@ -43,7 +62,7 @@ def test_hook_redirect(runner): # same concept as test_600_redirect.py ... but w
             await self.js.init()
 
         def end(self,txt):
-            db["retour"] = txt
+            self.parent.retour = txt
             self.exit()
 
     @http(r"/myhookrunwindow/(.+)")
@@ -62,6 +81,6 @@ def test_hook_redirect(runner): # same concept as test_600_redirect.py ... but w
             await self.js.start()
 
     t=T()
-    runner(t) # the returned instance is the main (t)
-    assert db["retour"] == "Hook Window"
+    r=runner(t)
+    assert r.retour == "Hook Window"
 

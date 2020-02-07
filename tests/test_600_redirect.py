@@ -43,7 +43,7 @@ def test_redirect(runner):
     assert r.ok
 
 def test_redirect_exit(runner): # same concept as test_600_redirect.py ... but with better url
-    db={}
+
     class W1(Guy):
         __doc__="""
         <script>
@@ -58,14 +58,18 @@ def test_redirect_exit(runner): # same concept as test_600_redirect.py ... but w
         __doc__="""
         <script>
         guy.init( async function() {
-            self.exit()
+            self.end()
         })
         </script>
         2
         """
+        def end(self):
+            self.parent.retour ="ok"
+            self.exit()
+
 
     t=W1()
 
-    runner(t) # the returned instance is the main (t)
-    assert True # but w2 has quit the main instance
+    r=runner(t) # the returned instance is the main (t)
+    assert r.retour == "ok"
 

@@ -22,6 +22,12 @@
 # logger for each part
 # cookiejar
 
+#### MAJ DOC :
+####  - _render(self,path) -> render(self,path)
+####  - talk about auto resolved query param when redirect to a guy window
+####  - talk about server.parent in children (py side)
+####
+####
 __version__="0.X.X"
 
 import os,sys,re,traceback,copy,types
@@ -80,7 +86,7 @@ async def callhttp(web,path): # web: RequestHandler
             else:
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
-                ret._callbackExit = web.instance._callbackExit
+                ret.parent = web.instance
                 web.write( ret._render() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
@@ -176,7 +182,7 @@ class MainHandler(tornado.web.RequestHandler):
                 self.write( self.instance._render() )
             else:
                 chpage=self.instanciate(page) # auto-instanciate each time !
-                chpage._callbackExit = self.instance._callbackExit
+                chpage.parent = self.instance
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
                     self.write( chpage._render() )
@@ -223,7 +229,10 @@ class ProxyHandler(tornado.web.RequestHandler):
         await self._do("DELETE",self.request.body,kwargs)
 
     async def _do(self,method,body,qargs):
-        url = qargs.get('url')
+        url = str(qargs.get('url'))
+        if not urlparse(url.lower()).scheme:
+            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/")) 
+
         if self.request.query:
             url = url + "?" + self.request.query
         headers = {k[4:]: v for k, v in self.request.headers.items() if k.lower().startswith("set-")}
@@ -352,6 +361,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         while not isFree("localhost", self.port):
             self.port += 1
 
+        self.instance._webserver=(self.host,self.port)
+
         try: # https://bugs.python.org/issue37373 FIX: tornado/py3.8 on windows
             if sys.platform == 'win32':
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -366,9 +377,9 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)/ws',          WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)/js',          GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)\.ws',         WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)\.js',         GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
         ])
         app.listen(self.port,address=self.host)
@@ -556,6 +567,7 @@ class Guy:
 
     size=None
     def __init__(self):
+        self.parent=None
         self._name = self.__class__.__name__
         self._id=self._name+"-"+str(id(self))
         self._callbackExit=None      #public callback when "exit"
@@ -567,9 +579,7 @@ class Guy:
         self._routes={}
         for n, v in inspect.getmembers(self, inspect.ismethod):
             if not v.__func__.__qualname__.startswith("Guy."):
-                if n not in ["init","__init__"]:
-                    if n!="_render":
-                        if n in dir(Guy): raise Exception("Can't set route '%s' (existing keyword))"%n)
+                if n not in ["init","__init__","render"]:
                     self._routes[n]=v
 
         # guy's inner routes
@@ -668,10 +678,10 @@ class Guy:
         return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self._callbackExit:
+        if self.parent is None:
             self._callbackExit()
         else:
-            logger.warning("'%s' has not _callbackExit !" % self._id)
+            self.parent._callbackExit()
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
@@ -731,7 +741,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/%s/ws"
+    var url=window.location.origin.replace("http","ws")+"/%s.ws"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -1015,6 +1025,7 @@ var self= {
             html=o._render( includeGuyJs=False )
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
+            #TODO: o.parent = self ? perhaps not !!!!!!!
             o._callbackExit=exit
             asyncio.ensure_future( doInit(o) )
 
@@ -1053,26 +1064,31 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/js"'%self._id,x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s.js"'%self._id,x)
 
-        if html:
-            if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+        if hasattr(self,"render"):
+            html = self.render( path )
             html=repgjs(html,self._name)
             return rep(html)
         else:
-            f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
-            if os.path.isfile(f):
-                with open(f,"r") as fid:
-                    b=fid.read()
-                    b=repgjs(b,self._name)
-                    return rep(b)
+            if html:
+                if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+                html=repgjs(html,self._name)
+                return rep(html)
             else:
-                return "ERROR: can't find '%s'" % f
+                f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
+                if os.path.isfile(f):
+                    with open(f,"r") as fid:
+                        html=fid.read()
+                        html=repgjs(html,self._name)
+                        return rep(html)
+                else:
+                    return "ERROR: can't find '%s'" % f
 
     @property
     def _dict(self):
         obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
-        for i in ["_callbackExit","__doc__","size"]:
+        for i in ["_callbackExit","__doc__","size","parent"]:
             if i in obj: del obj[i]
         return obj
 

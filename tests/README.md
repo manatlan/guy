@@ -3,7 +3,7 @@ Here are the main tests
 
 TODO:
 
- - test render override (guy.js replacement !)
- - test guy.fetch
+ - test static folder for rendering html
  - test config.json
+ - test guy.fetch more !
  - ...
