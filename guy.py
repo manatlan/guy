@@ -16,12 +16,13 @@
 #    more: https://github.com/manatlan/guy
 # #############################################################################
 
-#python3 -m pytest --cov-report html --cov=guy .
+#python3.7 -m pytest --cov-report html --cov=guy .
 
 #TODO:
+# logger for each part
 # cookiejar
 
-__version__="0.4.3"
+__version__="0.5.0"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -50,10 +51,12 @@ FOLDERSTATIC="static"
 class JSException(Exception): pass
 
 handler = logging.StreamHandler()
-handler.setFormatter( logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
+handler.setFormatter( logging.Formatter('-%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
 logger = logging.getLogger("guy")
 logger.addHandler(handler)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
+
+handler.setLevel(logging.ERROR)
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,8 +80,8 @@ async def callhttp(web,path): # web: RequestHandler
             else:
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
-                web.instance._children[ret._name]=ret
-                web.render( ret )
+                ret.parent = web.instance
+                web.write( ret._renderHtml() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -151,19 +154,17 @@ class JDict:
 class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
-    async def get(self,page=""):
-        if page==self.instance._name or page=="":
-            logger.debug("GuyJSHandler: Render Main guy.js (%s)",self.instance._name)
-            self.write(self.instance._renderJs())
+    async def get(self,id):
+        o=INST.get( id )
+        if o:
+            self.write(o._renderJs())
         else:
-            chpage=self.instance._children.get(page,None)
-            if chpage is not None:
-                logger.debug("GuyJSHandler: Render Children guy.js (%s)",page)
-                self.write(chpage._renderJs(asChild=True))
-            else:
-                raise tornado.web.HTTPError(status_code=404)
+            raise tornado.web.HTTPError(status_code=404)
+
+INST={}
 
 class MainHandler(tornado.web.RequestHandler):
+
     def initialize(self, instance):
         self.instance=instance
     async def get(self,page): # page doesn't contains a dot '.'
@@ -172,14 +173,13 @@ class MainHandler(tornado.web.RequestHandler):
         #####################################################
             if page=="" or page==self.instance._name:
                 logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
-                self.render(self.instance)
+                self.write( self.instance._renderHtml() )
             else:
-                chpage=self.instance._children.get(page,None)
-                if chpage is None:
-                    chpage=self.instanciate(page)
+                chpage=self.instanciate(page) # auto-instanciate each time !
+                chpage.parent = self.instance
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
-                    self.render(chpage)
+                    self.write( chpage._renderHtml() )
                 else:
                     raise tornado.web.HTTPError(status_code=404)
 
@@ -196,17 +196,13 @@ class MainHandler(tornado.web.RequestHandler):
     async def patch(self,page): # page doesn't contains a dot '.'
         await self._callhttp(page)
 
-    def instanciate(self,page,*a,**k):
+    def instanciate(self,page):
         declared = {cls.__name__:cls for cls in Guy.__subclasses__()}
-        gclass=declared.get(page,None)
-        if gclass: # auto instanciate !
-            logger.debug("MainHandler: Auto instanciate (%s)",page)
-            self.instance._children[page]=gclass(*a,**k)
-            return self.instance._children[page]
-
-    def render(self,instance):
-        """ write rendered instance """
-        self.write(instance._render( instance._folder ))
+        gclass=declared[page]
+        logger.debug("MainHandler: Auto instanciate (%s)",page)
+        x=inspect.signature(gclass.__init__)
+        args=[self.get_argument(i) for i in list(x.parameters)[1:]]
+        return gclass(*args)
 
     async def _callhttp(self,page):
         if not await callhttp(self,page):
@@ -227,7 +223,10 @@ class ProxyHandler(tornado.web.RequestHandler):
         await self._do("DELETE",self.request.body,kwargs)
 
     async def _do(self,method,body,qargs):
-        url = qargs.get('url')
+        url = str(qargs.get('url'))
+        if not urlparse(url.lower()).scheme:
+            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/")) 
+
         if self.request.query:
             url = url + "?" + self.request.query
         headers = {k[4:]: v for k, v in self.request.headers.items() if k.lower().startswith("set-")}
@@ -253,14 +252,13 @@ async def sockwrite(wsock, **kwargs ):
         try:
             await wsock.write_message(jDumps(kwargs))
         except Exception as e:
-            logger.error("Socket write : can't")
+            logger.error("Socket write : can't:%s",wsock)
             if wsock in WebSocketHandler.clients: del WebSocketHandler.clients[wsock]
 
 
 async def emit(event,*args):
     logger.debug(">>> Emit ALL: %s (%s)",event,args)
-    clients=list( WebSocketHandler.clients.keys() )
-    for i in clients:
+    for i in list( WebSocketHandler.clients.keys() ):
         await sockwrite(i,event=event,args=args)
 
 
@@ -271,15 +269,20 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, instance):
         self.instance=instance
 
-    def open(self,page):
-        ichildren=self.instance._children.get(page,None)
-        if ichildren:
-            new=ichildren._initCopy( self )
+    def open(self,id):
+        o=INST.get( id )
+        if o:
+          logger.debug("Connect %s",id)
+          o._connect( self ) # provok l'appel de l'init
+          WebSocketHandler.clients[self]=o
         else:
-            new=self.instance._initCopy( self )
-        WebSocketHandler.clients[self]=new
+          logger.debug("CAN't Connect %s",id)
 
     def on_close(self):
+        o=WebSocketHandler.clients[self]
+        logger.debug("Disconnect %s",o._id)
+        if o._id!=self.instance._id: # avoid to remove the main instance
+          del INST[o._id]
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
@@ -352,6 +355,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         while not isFree("localhost", self.port):
             self.port += 1
 
+        self.instance._webserver=(self.host,self.port)
+
         try: # https://bugs.python.org/issue37373 FIX: tornado/py3.8 on windows
             if sys.platform == 'win32':
                 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -361,16 +366,15 @@ class WebServer(Thread): # the webserver is ran on a separated thread
     def run(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         tornado.platform.asyncio.AsyncIOMainLoop().install()
-        #~ tornado.autoreload.start()
-        #~ tornado.autoreload.watch( sys.argv[0] )
+        # tornado.autoreload.start()
+        # tornado.autoreload.watch( sys.argv[0] )
 
         app=tornado.web.Application([
-            (r'/(?P<page>[^/]+)/ws',        WebSocketHandler,dict(instance=self.instance)),
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/guy.js',                    GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^/]+)/guy.js',    GuyJSHandler,dict(instance=self.instance)),
-            (r'/(?P<page>[^\\.]*)',         MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
+            (r'/(?P<id>[^/]+)-ws',         WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-js',         GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
+            (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=os.path.join( self.instance._folder, FOLDERSTATIC) ))
         ])
         app.listen(self.port,address=self.host)
 
@@ -384,8 +388,10 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         self.loop.run_until_complete(_waitExit())
 
         # gracefull death
-        ## tasks = asyncio.all_tasks(self.loop) #py37
-        tasks = asyncio.Task.all_tasks(self.loop) #py35
+        try:
+            tasks = asyncio.all_tasks(self.loop) #py37
+        except:
+            tasks = asyncio.Task.all_tasks(self.loop) #py35
         for task in tasks: task.cancel()
         try:
             self.loop.run_until_complete(asyncio.gather(*tasks))
@@ -440,7 +446,7 @@ class ChromeApp:
             if tempfile.gettempdir():
                 args.append(
                     "--user-data-dir=%s"
-                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^\w]","_",url))
+                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^a-zA-Z]","_",url))
                 )
             logger.debug("CHROME APP-MODE: %s",args)
             self.__instance = subprocess.Popen(args)
@@ -477,8 +483,8 @@ class ChromeAppCef:
             sys.excepthook = cef.ExceptHook
 
             settings = {
-                "product_version": "Wuy/%s" % __version__,
-                "user_agent": "Wuy/%s (%s)" % (__version__, platform.system()),
+                "product_version": "Guy/%s" % __version__,
+                "user_agent": "Guy/%s (%s)" % (__version__, platform.system()),
                 "context_menu": dict(
                     enabled=True,
                     navigation=False,
@@ -499,7 +505,7 @@ class ChromeAppCef:
                 )
 
             # ===---
-            def wuyInit(width, height):
+            def guyInit(width, height):
                 if size == FULLSCREEN:
                     if isWin:
                         b.ToggleFullscreen()  # win only
@@ -507,27 +513,27 @@ class ChromeAppCef:
                         b.SetBounds(0, 0, width, height)  # not win
 
             bindings = cef.JavascriptBindings()
-            bindings.SetFunction("wuyInit", wuyInit)
+            bindings.SetFunction("guyInit", guyInit)
             b.SetJavascriptBindings(bindings)
 
-            b.ExecuteJavascript("wuyInit(window.screen.width,window.screen.height)")
+            b.ExecuteJavascript("guyInit(window.screen.width,window.screen.height)")
             # ===---
 
-            class WuyClientHandler(object):
+            class GuyClientHandler(object):
                 def OnLoadEnd(self, browser, **_):
                     pass  # could serve in the future (?)
 
-            class WuyDisplayHandler(object):
+            class GuyDisplayHandler(object):
                 def OnTitleChange(self, browser, title):
                     try:
                         cef.WindowUtils.SetTitle(browser, title)
                     except AttributeError:
-                        logger.warn(
+                        logger.warning(
                             "**WARNING** : title changed '%s' not work on linux",title
                         )
 
-            b.SetClientHandler(WuyClientHandler())
-            b.SetClientHandler(WuyDisplayHandler())
+            b.SetClientHandler(GuyClientHandler())
+            b.SetClientHandler(GuyDisplayHandler())
             logger.debug("CEFPYTHON : %s",url)
             return cef
 
@@ -541,26 +547,24 @@ class ChromeAppCef:
 
 
 async def doInit( instance ):
-    try:
-        if hasattr(instance,"init"):
-            self_init = getattr(instance, "init")
-            if asyncio.iscoroutinefunction( self_init ):
-                await self_init( instance )
-            else:
-                self_init( instance )
-    except TypeError as e:
-        pass
+    instance._rebind() # WTF ?: need to call this
+    if hasattr(instance,"init"):
+        self_init = getattr(instance, "init")
+        if asyncio.iscoroutinefunction( self_init ):
+            await self_init(  )
+        else:
+            self_init(  )
+
 
 class Guy:
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
-    _runned=None    # (only the main instance set this)
-    _children={}
 
     size=None
-    def __init__(self,*a,**k):
+    def __init__(self):
+        self.parent=None
         self._name = self.__class__.__name__
-        self._id=self._name+"-"+uuid.uuid4().hex
-        self.callbackExit=None      #public callback when "exit"
+        self._id=self._name+"-"+hex(id(self))[2:]
+        self._callbackExit=None      #public callback when "exit"
         if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
             self._folder=sys._MEIPASS
         else:
@@ -569,9 +573,7 @@ class Guy:
         self._routes={}
         for n, v in inspect.getmembers(self, inspect.ismethod):
             if not v.__func__.__qualname__.startswith("Guy."):
-                if n not in ["init","__init__"]:
-                    if n!="_render":
-                        if n in dir(Guy): raise Exception("Can't set route '%s' (existing keyword))"%n)
+                if n not in ["init","__init__","render"]:
                     self._routes[n]=v
 
         # guy's inner routes
@@ -580,30 +582,26 @@ class Guy:
         self._routes["exit"]=self.exit
 
 
-    def _initCopy(self,wsock):
-        logger.debug("CLONE %s",self._name)
-        keys=self._routes.keys()
-        self._routes={}
-        new = copy.copy(self)
-        for n, v in inspect.getmembers(new):
-            if n in keys:
-                if inspect.isfunction(v):
-                    new._routes[n]=types.MethodType( v, new ) #rebound !
-                    setattr(new,n,types.MethodType( v, new )) #rebound !
-                else:
-                    new._routes[n]=v
+    def _rebind(self):
+        ## REBIND ################################################################
+        ## REBIND ################################################################
+        ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
+        for n, v in inspect.getmembers(self):
+            if not n.startswith("_") and inspect.isfunction(v):
+                logger.debug("::: REBIND method %s.%s()" % (self._name,n))
+                setattr(self,n,types.MethodType( v, self )) #rebound !
+        ## REBIND ################################################################
+        ## REBIND ################################################################
+        ## REBIND ################################################################
 
-        new._wsock = wsock
-        self._runned = new
-
-        asyncio.ensure_future( doInit(new) )
-
-        return new
+    def _connect(self,wsock):
+        self._wsock = wsock # save the current socket for this instance !!!
+        asyncio.ensure_future( doInit(self) )
 
 
     def run(self,log=False):
         """ Run the guy's app in a windowed env (one client)"""
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
@@ -617,7 +615,7 @@ class Guy:
                 ws.exit()
                 app.exit()
 
-            self.callbackExit = exit
+            self._callbackExit = exit
             try:
                 app.wait() # block
             except KeyboardInterrupt:
@@ -626,29 +624,29 @@ class Guy:
             ws.exit()
             ws.join()
 
-        return self._runned
+        return self
 
     def runCef(self,log=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self )
         ws.start()
 
         app=ChromeAppCef(ws.startPage,self.size)
-        self.callbackExit = app.exit
+        self._callbackExit = app.exit
         try:
             app.wait() # block
         except KeyboardInterrupt:
             print("-Process stopped")
         ws.exit()
         ws.join()
-        return self._runned
+        return self
 
 
     def serve(self,port=8000,log=False,open=True):
         """ Run the guy's app for multiple clients (web/server mode) """
-        if log: logger.setLevel(logging.DEBUG)
+        if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port )
         ws.start()
@@ -656,7 +654,7 @@ class Guy:
         def exit():
             ws.exit()
 
-        self.callbackExit = exit
+        self._callbackExit = exit
         print("Running", ws.startPage )
 
         if open: #auto open browser
@@ -671,10 +669,13 @@ class Guy:
         except KeyboardInterrupt:
             print("-Process stopped")
         ws.exit()
-        return self._runned #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
+        return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self.callbackExit: self.callbackExit()
+        if self._callbackExit: 
+            self._callbackExit()
+        else:
+            self.parent._callbackExit()
 
     def cfg_set(self, key, value): setattr(self.cfg,key,value)
     def cfg_get(self, key=None):   return getattr(self.cfg,key)
@@ -686,7 +687,7 @@ class Guy:
                 async def _(*args):
                     return await self._callMe(jsmethod,*args)
                 return _
-        return Proxy()        
+        return Proxy()
 
     @property
     def cfg(self):
@@ -734,7 +735,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/%s/ws"
+    var url=window.location.origin.replace("http","ws")+"/%s-ws"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -743,7 +744,7 @@ function setupWS( cbCnx ) {
       if(r.uuid) // that's a response from call py !
           document.dispatchEvent( new CustomEvent('guy-'+r.uuid,{ detail: r} ) );
       else if(r.jsmethod) { // call from py : self.js.<methodjs>()
-        
+
           function sendBackReturn( response ) {
             var cmd={
                 command:    "return",
@@ -956,7 +957,7 @@ var self= {
 """ % (
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
-        self._name, # for the socket
+        self._id, # for the socket
         "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
@@ -985,16 +986,13 @@ var self= {
                 else:
                     return response.get("value")
             await asyncio.sleep(0.01)
-        
+
 
     def _getRoutage(self,method):
         function=None
         if "." in method:
             id,method = method.split(".")
-            for i in self._children.values():
-                if i._id == id:
-                    logger.debug("METHOD CHILD %s %s",i._name,method)
-                    function=i._routes[method]
+            function=INST.get(id)._routes[method]
         else:
             logger.debug("METHOD SELF %s",method)
             function=self._routes[method]
@@ -1007,7 +1005,6 @@ var self= {
 
         if isinstance(ret,Guy):
             ################################################################
-            self._children[ ret._name ]=ret
             o=ret
 
             routes=[k for k in o._routes.keys() if not k.startswith("_")]
@@ -1015,16 +1012,21 @@ var self= {
             eventExit="event-"+o._id+".exit"
             def exit():
                 logger.debug("USE %s: EXIT (%s)",o._name,o._json)
-                # asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
-                asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
+                try:
+                    asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
+                except:
+                    asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
+                del INST[o._id]
 
 
-            html=o._render( self._folder,includeGuyJs=False)
+
+            html=o._renderHtml( includeGuyJs=False )
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
-            o.callbackExit=exit
+            o.parent = self
+            o._callbackExit=exit
             asyncio.ensure_future( doInit(o) )
-            
+
             obj=dict(
                 id=o._id,
                 name=o._name,
@@ -1040,7 +1042,10 @@ var self= {
 
         return ret
 
-    def _render(self,path,includeGuyJs=True):
+    def _renderHtml(self,includeGuyJs=True):
+        INST[self._id]=self # When render -> save the instance in the pool (INST)
+
+        path=self._folder
         html=self.__doc__
 
         def rep(x):
@@ -1057,26 +1062,37 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s/guy.js"'%page,x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%self._id,x)
 
-        if html:
-            if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+        if hasattr(self,"render"):
+            html = self.render( path )
             html=repgjs(html,self._name)
             return rep(html)
         else:
-            f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
-            if os.path.isfile(f):
-                with open(f,"r") as fid:
-                    b=fid.read()
-                    b=repgjs(b,self._name)
-                    return rep(b)
+            if hasattr(self,"_render"):
+                print("**DEPRECATING** use of _render() ... use render() instead !")
+                html = self._render( path )
+                html=repgjs(html,self._name)
+                return rep(html)
             else:
-                return "ERROR: can't find '%s'" % f
+                if html:
+                    if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+                    html=repgjs(html,self._name)
+                    return rep(html)
+                else:
+                    f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
+                    if os.path.isfile(f):
+                        with open(f,"r") as fid:
+                            html=fid.read()
+                            html=repgjs(html,self._name)
+                            return rep(html)
+                    else:
+                        return "ERROR: can't find '%s'" % f
 
     @property
     def _dict(self):
         obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
-        for i in ["callbackExit","__doc__","_children","size"]:
+        for i in ["_callbackExit","__doc__","size","parent"]:
             if i in obj: del obj[i]
         return obj
 
@@ -1122,7 +1138,7 @@ def runAndroid(ga):
                 App.get_running_app().stop()
                 os._exit(0)
 
-            guyWindow.callbackExit = exit
+            guyWindow._callbackExit = exit
 
             self.ws=WebServer( guyWindow )
             self.ws.start()
@@ -1152,4 +1168,3 @@ if __name__ == "__main__":
     # from testPrompt import Win as GuyApp
     # GuyApp().run()
     pass
-
