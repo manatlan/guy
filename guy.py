@@ -87,7 +87,7 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
                 ret.parent = web.instance
-                web.write( ret._render() )
+                web.write( ret._renderHtml() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -179,13 +179,13 @@ class MainHandler(tornado.web.RequestHandler):
         #####################################################
             if page=="" or page==self.instance._name:
                 logger.debug("MainHandler: Render Main Instance (%s)",self.instance._name)
-                self.write( self.instance._render() )
+                self.write( self.instance._renderHtml() )
             else:
                 chpage=self.instanciate(page) # auto-instanciate each time !
                 chpage.parent = self.instance
                 if chpage:
                     logger.debug("MainHandler: Render Children (%s)",page)
-                    self.write( chpage._render() )
+                    self.write( chpage._renderHtml() )
                 else:
                     raise tornado.web.HTTPError(status_code=404)
 
@@ -380,7 +380,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/(?P<id>[^/]+)\.ws',         WebSocketHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)\.js',         GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',                      tornado.web.StaticFileHandler, {'path': os.path.join( self.instance._folder, FOLDERSTATIC) })
+            (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=os.path.join( self.instance._folder, FOLDERSTATIC) ))
         ])
         app.listen(self.port,address=self.host)
 
@@ -489,8 +489,8 @@ class ChromeAppCef:
             sys.excepthook = cef.ExceptHook
 
             settings = {
-                "product_version": "Wuy/%s" % __version__,
-                "user_agent": "Wuy/%s (%s)" % (__version__, platform.system()),
+                "product_version": "Guy/%s" % __version__,
+                "user_agent": "Guy/%s (%s)" % (__version__, platform.system()),
                 "context_menu": dict(
                     enabled=True,
                     navigation=False,
@@ -511,7 +511,7 @@ class ChromeAppCef:
                 )
 
             # ===---
-            def wuyInit(width, height):
+            def guyInit(width, height):
                 if size == FULLSCREEN:
                     if isWin:
                         b.ToggleFullscreen()  # win only
@@ -519,17 +519,17 @@ class ChromeAppCef:
                         b.SetBounds(0, 0, width, height)  # not win
 
             bindings = cef.JavascriptBindings()
-            bindings.SetFunction("wuyInit", wuyInit)
+            bindings.SetFunction("guyInit", guyInit)
             b.SetJavascriptBindings(bindings)
 
-            b.ExecuteJavascript("wuyInit(window.screen.width,window.screen.height)")
+            b.ExecuteJavascript("guyInit(window.screen.width,window.screen.height)")
             # ===---
 
-            class WuyClientHandler(object):
+            class GuyClientHandler(object):
                 def OnLoadEnd(self, browser, **_):
                     pass  # could serve in the future (?)
 
-            class WuyDisplayHandler(object):
+            class GuyDisplayHandler(object):
                 def OnTitleChange(self, browser, title):
                     try:
                         cef.WindowUtils.SetTitle(browser, title)
@@ -538,8 +538,8 @@ class ChromeAppCef:
                             "**WARNING** : title changed '%s' not work on linux",title
                         )
 
-            b.SetClientHandler(WuyClientHandler())
-            b.SetClientHandler(WuyDisplayHandler())
+            b.SetClientHandler(GuyClientHandler())
+            b.SetClientHandler(GuyDisplayHandler())
             logger.debug("CEFPYTHON : %s",url)
             return cef
 
@@ -678,7 +678,7 @@ class Guy:
         return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self.parent is None:
+        if self._callbackExit: 
             self._callbackExit()
         else:
             self.parent._callbackExit()
@@ -1022,10 +1022,10 @@ var self= {
                 asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
 
 
-            html=o._render( includeGuyJs=False )
+            html=o._renderHtml( includeGuyJs=False )
             scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
 
-            #TODO: o.parent = self ? perhaps not !!!!!!!
+            o.parent = self
             o._callbackExit=exit
             asyncio.ensure_future( doInit(o) )
 
@@ -1044,7 +1044,7 @@ var self= {
 
         return ret
 
-    def _render(self,includeGuyJs=True):
+    def _renderHtml(self,includeGuyJs=True):
         INST[self._id]=self # When render -> save the instance in the pool (INST)
 
         path=self._folder
@@ -1071,19 +1071,25 @@ var self= {
             html=repgjs(html,self._name)
             return rep(html)
         else:
-            if html:
-                if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+            if hasattr(self,"_render"):
+                print("**DEPRECATING** use of _render() ... use render() instead !")
+                html = self._render( path )
                 html=repgjs(html,self._name)
                 return rep(html)
             else:
-                f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
-                if os.path.isfile(f):
-                    with open(f,"r") as fid:
-                        html=fid.read()
-                        html=repgjs(html,self._name)
-                        return rep(html)
+                if html:
+                    if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
+                    html=repgjs(html,self._name)
+                    return rep(html)
                 else:
-                    return "ERROR: can't find '%s'" % f
+                    f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
+                    if os.path.isfile(f):
+                        with open(f,"r") as fid:
+                            html=fid.read()
+                            html=repgjs(html,self._name)
+                            return rep(html)
+                    else:
+                        return "ERROR: can't find '%s'" % f
 
     @property
     def _dict(self):
