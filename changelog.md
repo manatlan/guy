@@ -1,3 +1,13 @@
+0.5.0: (08/02/2020)
+ - BIGGEST CHANGES:
+    - "real instances" (no more clonage) .. a lot simpler
+    - better system to manage instances (same fo embbeded or redirected) 
+    - pyside: each window now have a reference (.parent) to the main instance (the one which starts all)
+    - a lot of little fixes 
+    - more pytest coverage (mainly main features)
+    - _render() -> render()
+    - resolve query params when redirecting to another instance for match the constructor
+
 0.4.3: (01/02/2020)
  - EVOL: Py side : can call js method directly ( `await self.js.jsmethod(...)` )
  

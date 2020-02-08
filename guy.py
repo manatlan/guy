@@ -22,13 +22,7 @@
 # logger for each part
 # cookiejar
 
-#### MAJ DOC :
-####  - _render(self,path) -> render(self,path)
-####  - talk about auto resolved query param when redirect to a guy window
-####  - talk about server.parent in children (py side)
-####
-####
-__version__="0.X.X"
+__version__="0.5.0"
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -372,8 +366,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
     def run(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         tornado.platform.asyncio.AsyncIOMainLoop().install()
-        #~ tornado.autoreload.start()
-        #~ tornado.autoreload.watch( sys.argv[0] )
+        # tornado.autoreload.start()
+        # tornado.autoreload.watch( sys.argv[0] )
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
