@@ -377,8 +377,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)\.ws',         WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)\.js',         GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-ws',         WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-js',         GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=os.path.join( self.instance._folder, FOLDERSTATIC) ))
         ])
@@ -452,7 +452,7 @@ class ChromeApp:
             if tempfile.gettempdir():
                 args.append(
                     "--user-data-dir=%s"
-                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^\w]","_",url))
+                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^a-zA-Z]","_",url))
                 )
             logger.debug("CHROME APP-MODE: %s",args)
             self.__instance = subprocess.Popen(args)
@@ -569,7 +569,7 @@ class Guy:
     def __init__(self):
         self.parent=None
         self._name = self.__class__.__name__
-        self._id=self._name+"-"+str(id(self))
+        self._id=self._name+"-"+hex(id(self))[2:]
         self._callbackExit=None      #public callback when "exit"
         if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
             self._folder=sys._MEIPASS
@@ -741,7 +741,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/%s.ws"
+    var url=window.location.origin.replace("http","ws")+"/%s-ws"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -1018,8 +1018,12 @@ var self= {
             eventExit="event-"+o._id+".exit"
             def exit():
                 logger.debug("USE %s: EXIT (%s)",o._name,o._json)
-                # asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
-                asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
+                try:
+                    asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
+                except:
+                    asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
+                del INST[o._id]
+
 
 
             html=o._renderHtml( includeGuyJs=False )
@@ -1064,7 +1068,7 @@ var self= {
             return x
 
         def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s.js"'%self._id,x)
+          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%self._id,x)
 
         if hasattr(self,"render"):
             html = self.render( path )
