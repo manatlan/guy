@@ -209,8 +209,8 @@ if __name__ == "__main__":
     #~ print( x.ret )
 
     x=Win()
-    #~ x.runCef()
-    x.run(True)
-    #~ x.server()
+    # x.runCef()
+    x.run(autoreload=True)
+    # x.serve()
 
 

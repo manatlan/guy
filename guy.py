@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.0"
+__version__="0.5.1" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -344,10 +344,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 class WebServer(Thread): # the webserver is ran on a separated thread
     port = 39000
-    def __init__(self,instance,host="localhost",port=None):
+    def __init__(self,instance,host="localhost",port=None,autoreload=False):
         super(WebServer, self).__init__()
         self.instance=instance
         self.host=host
+        self.autoreload=autoreload
 
         if port is not None:
             self.port = port
@@ -364,17 +365,23 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             pass
 
     def run(self):
+        statics = os.path.join( self.instance._folder, FOLDERSTATIC)
+
         asyncio.set_event_loop(asyncio.new_event_loop())
         tornado.platform.asyncio.AsyncIOMainLoop().install()
-        # tornado.autoreload.start()
-        # tornado.autoreload.watch( sys.argv[0] )
+        if self.autoreload:
+            print("**AUTORELOAD**")
+            tornado.autoreload.start()
+            tornado.autoreload.watch( sys.argv[0] )
+            for p in os.listdir( statics ) :
+                tornado.autoreload.watch(os.path.abspath(p))
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)-ws',         WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)-js',         GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
-            (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=os.path.join( self.instance._folder, FOLDERSTATIC) ))
+            (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
         ])
         app.listen(self.port,address=self.host)
 
@@ -599,14 +606,14 @@ class Guy:
         asyncio.ensure_future( doInit(self) )
 
 
-    def run(self,log=False):
+    def run(self,log=False,autoreload=False):
         """ Run the guy's app in a windowed env (one client)"""
         if log: handler.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
         else:
-            ws=WebServer( self )
+            ws=WebServer( self, autoreload=autoreload )
             ws.start()
 
             app=ChromeApp(ws.startPage,self.size)
@@ -614,6 +621,8 @@ class Guy:
             def exit():
                 ws.exit()
                 app.exit()
+
+            tornado.autoreload.add_reload_hook(exit)
 
             self._callbackExit = exit
             try:
@@ -626,14 +635,17 @@ class Guy:
 
         return self
 
-    def runCef(self,log=False):
+    def runCef(self,log=False,autoreload=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         if log: handler.setLevel(logging.DEBUG)
 
-        ws=WebServer( self )
+        ws=WebServer( self, autoreload=autoreload )
         ws.start()
 
         app=ChromeAppCef(ws.startPage,self.size)
+
+        tornado.autoreload.add_reload_hook(app.exit)
+
         self._callbackExit = app.exit
         try:
             app.wait() # block
@@ -644,11 +656,11 @@ class Guy:
         return self
 
 
-    def serve(self,port=8000,log=False,open=True):
+    def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
         if log: handler.setLevel(logging.DEBUG)
 
-        ws=WebServer( self ,"0.0.0.0",port=port )
+        ws=WebServer( self ,"0.0.0.0",port=port, autoreload=autoreload )
         ws.start()
 
         def exit():
