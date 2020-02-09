@@ -54,3 +54,5 @@ Here is a simple **guy's app** (**app mode**):
         </tr>
     </table>
 </p>
+
+[![Join the chat at https://gitter.im/guy-python/community](https://badges.gitter.im/jessedobbelaere/ckeditor-iconfont.svg)](https://gitter.im/guy-python/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
