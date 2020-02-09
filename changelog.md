@@ -1,6 +1,6 @@
 0.5.2: (09/02/2020)
  - FIX: guy crashed when autoreload with no static folder
- 
+
 0.5.1: (09/02/2020)
  - EVOL : autoreload available
 
@@ -11,7 +11,7 @@
     - pyside: each window now have a reference (.parent) to the main instance (the one which starts all)
     - a lot of little fixes 
     - more pytest coverage (mainly main features)
-    - _render() -> render()
+    - _render() -> render() and replace "guy.js" in all cases
     - resolve query params when redirecting to another instance for match the constructor
 
 0.4.3: (01/02/2020)
