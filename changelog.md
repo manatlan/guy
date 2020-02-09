@@ -1,3 +1,9 @@
+0.5.2: (09/02/2020)
+ - FIX: guy crashed when autoreload with no static folder
+ 
+0.5.1: (09/02/2020)
+ - EVOL : autoreload available
+
 0.5.0: (08/02/2020)
  - BIGGEST CHANGES:
     - "real instances" (no more clonage) .. a lot simpler
