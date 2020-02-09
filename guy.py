@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.1" #autoreload's version !
+__version__="0.5.2" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -373,8 +373,9 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             print("**AUTORELOAD**")
             tornado.autoreload.start()
             tornado.autoreload.watch( sys.argv[0] )
-            for p in os.listdir( statics ) :
-                tornado.autoreload.watch(os.path.abspath(p))
+            if os.path.isdir(statics):
+                for p in os.listdir( statics ) :
+                    tornado.autoreload.watch(os.path.abspath(p))
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
