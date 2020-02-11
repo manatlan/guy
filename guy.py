@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.2" #autoreload's version !
+__version__="0.5.3" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse

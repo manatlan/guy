@@ -1,3 +1,6 @@
+0.5.3: (11/02/2020)
+ - FIX: thanks @icarito https://github.com/manatlan/guy/pull/8/commits/9477b548b91ae81bfc327dac7ba1ec80804f4f8d
+
 0.5.2: (09/02/2020)
  - FIX: guy crashed when autoreload with no static folder
 
