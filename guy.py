@@ -375,7 +375,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             tornado.autoreload.watch( sys.argv[0] )
             if os.path.isdir(statics):
                 for p in os.listdir( statics ) :
-                    tornado.autoreload.watch(os.path.abspath(p))
+                    tornado.autoreload.watch(os.path.abspath(os.path.join(statics, p)))
 
         app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
