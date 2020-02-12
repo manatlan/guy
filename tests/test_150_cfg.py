@@ -1,6 +1,6 @@
 from guy import Guy,http
 
-
+#TODO: manage config.json (remove before runned, and delete after)
 
 def test_cfg(runner):
     class T(Guy):
