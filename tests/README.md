@@ -3,6 +3,6 @@ Here are the main tests
 
 TODO:
 
- - test use static folder for rendering html files
  - test guy.fetch more tests !
+ - test redefinig guy.FOLDERSTATIC !
  - ...
