@@ -719,6 +719,7 @@ class Guy:
 
                 logger.debug("Use config: %s",path)
                 sself.__o=JDict( path )
+                sself._file=path # new >0.5.3
             def __setattr__(self,k,v):
                 if k.startswith("_"):
                     super(Proxy, self).__setattr__(k, v)

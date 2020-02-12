@@ -1,6 +1,5 @@
 from guy import Guy,http
-
-#TODO: manage config.json (remove before runned, and delete after)
+import os
 
 def test_cfg(runner):
     class T(Guy):
@@ -13,6 +12,8 @@ def test_cfg(runner):
 
         async function stop() {
             let c=await guy.cfg.value;
+            let unknown = await guy.cfg.unknown
+            if(unknown) c+=unknown
             self.stop(c)
         }
 
@@ -31,9 +32,10 @@ def test_cfg(runner):
         def stop(self,c):
             self.ccfg=c
             self.scfg=self.cfg.value
+            if self.cfg.unknown: self.scfg+=self.cfg.unknown
             self.exit()
         
     t=T()
     r=runner(t)
+    if t.cfg._file and os.path.isfile(t.cfg._file): os.unlink(t.cfg._file)
     assert r.ccfg == r.scfg == "(__init__)(init)(client)"
-
