@@ -3,7 +3,6 @@ Here are the main tests
 
 TODO:
 
- - test static folder for rendering html
- - test config.json
- - test guy.fetch more !
+ - test use static folder for rendering html files
+ - test guy.fetch more tests !
  - ...
