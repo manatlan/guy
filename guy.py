@@ -225,7 +225,7 @@ class ProxyHandler(tornado.web.RequestHandler):
     async def _do(self,method,body,qargs):
         url = str(qargs.get('url'))
         if not urlparse(url.lower()).scheme:
-            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/")) 
+            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/"))
 
         if self.request.query:
             url = url + "?" + self.request.query
@@ -347,6 +347,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
     def __init__(self,instance,host="localhost",port=None,autoreload=False):
         super(WebServer, self).__init__()
         self.instance=instance
+        self.app=None
         self.host=host
         self.autoreload=autoreload
 
@@ -377,14 +378,14 @@ class WebServer(Thread): # the webserver is ran on a separated thread
                 for p in os.listdir( statics ) :
                     tornado.autoreload.watch(os.path.abspath(os.path.join(statics, p)))
 
-        app=tornado.web.Application([
+        self.app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
         ])
-        app.listen(self.port,address=self.host)
+        self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
 
@@ -685,7 +686,7 @@ class Guy:
         return self #TODO: technically multiple cloned instances can have be runned (which one is the state ?)
 
     def exit(self):
-        if self._callbackExit: 
+        if self._callbackExit:
             self._callbackExit()
         else:
             self.parent._callbackExit()
