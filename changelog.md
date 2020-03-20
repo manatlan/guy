@@ -1,4 +1,5 @@
  - EVOL: expose config file path (py side) : self.cfg._file
+ - EVOL: tornado application is available as "app" attribut on guy instance (for specials customizations), thanks @dferens !
 
 0.5.3: (11/02/2020)
  - FIX: thanks @icarito https://github.com/manatlan/guy/pull/8/commits/9477b548b91ae81bfc327dac7ba1ec80804f4f8d

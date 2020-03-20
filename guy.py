@@ -346,6 +346,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
     port = 39000
     def __init__(self,instance,host="localhost",port=None,autoreload=False):
         super(WebServer, self).__init__()
+        self.app=None
         self.instance=instance
         self.host=host
         self.autoreload=autoreload
@@ -377,14 +378,14 @@ class WebServer(Thread): # the webserver is ran on a separated thread
                 for p in os.listdir( statics ) :
                     tornado.autoreload.watch(os.path.abspath(os.path.join(statics, p)))
 
-        app=tornado.web.Application([
+        self.app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
         ])
-        app.listen(self.port,address=self.host)
+        self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
 
