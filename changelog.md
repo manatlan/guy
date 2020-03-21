@@ -1,3 +1,5 @@
+0.5.4: (21/03/2020)
+ - FIX: ability to read html files with encoding utf8 or cp1252
  - EVOL: expose config file path (py side) : self.cfg._file
  - EVOL: tornado application is available as "app" attribut on guy instance (for specials customizations), thanks @dferens !
 

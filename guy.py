@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.3" #autoreload's version !
+__version__="0.5.4" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -44,6 +44,7 @@ import concurrent
 import inspect
 import uuid
 import logging
+import io
 
 class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
@@ -85,6 +86,21 @@ async def callhttp(web,path): # web: RequestHandler
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
+
+class readTextFile(str):
+    filename=None
+    encoding=None
+    def __new__(cls,fn:str):
+        for e in ["utf8","cp1252"]:
+            try:
+                with io.open(fn,"r",encoding=e) as fid:
+                    obj=str.__new__(cls,fid.read())
+                    obj.filename=fn
+                    obj.encoding=e
+                    return obj
+            except UnicodeDecodeError:
+                pass
+        raise Exception("Can't read '%s'"%fn)
 
 def serialize(obj):
     def toJSDate(d):
@@ -1097,10 +1113,9 @@ var self= {
                 else:
                     f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
                     if os.path.isfile(f):
-                        with open(f,"r") as fid:
-                            html=fid.read()
-                            html=repgjs(html,self._name)
-                            return rep(html)
+                        html=readTextFile(f)
+                        html=repgjs(html,self._name)
+                        return rep(html)
                     else:
                         return "ERROR: can't find '%s'" % f
 
