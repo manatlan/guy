@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.4" #autoreload's version !
+__version__="0.5.5" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -729,7 +729,7 @@ class Guy:
                 else:
                     exepath=os.path.abspath(os.path.realpath(sys.argv[0])) # or os.path.abspath(__main__.__file__)
                     classpath= os.path.abspath( os.path.realpath(inspect.getfile( self.__class__ )) )
-                    if classpath!=exepath: # as module
+                    if not exepath.endswith(".exe") and classpath!=exepath: # as module
                         path=os.path.join( os.path.expanduser("~") , ".%s.json"%os.path.basename(exepath) )
                     else: # as exe
                         path = os.path.join( os.path.dirname(exepath), "config.json" )
