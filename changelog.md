@@ -1,3 +1,6 @@
+0.5.4: (26/03/2020)
+ - FIX: on win, when freezed, cant be considered as module
+ 
 0.5.4: (21/03/2020)
  - FIX: ability to read html files with encoding utf8 or cp1252
  - EVOL: expose config file path (py side) : self.cfg._file
