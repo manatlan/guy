@@ -466,6 +466,7 @@ class ChromeApp:
 
         if exe:
             args = [exe, "--app=" + url] + chromeArgs
+            # args.append("--aggressive-cache-discard")
             if size == FULLSCREEN:
                 args.append("--start-fullscreen")
             if tempfile.gettempdir():
@@ -587,6 +588,7 @@ class Guy:
     size=None
     def __init__(self):
         self.parent=None
+        self._log=False
         self._name = self.__class__.__name__
         self._id=self._name+"-"+hex(id(self))[2:]
         self._callbackExit=None      #public callback when "exit"
@@ -626,6 +628,7 @@ class Guy:
 
     def run(self,log=False,autoreload=False):
         """ Run the guy's app in a windowed env (one client)"""
+        self._log=log
         if log: handler.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
@@ -655,6 +658,7 @@ class Guy:
 
     def runCef(self,log=False,autoreload=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
+        self._log=log
         if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self, autoreload=autoreload )
@@ -676,6 +680,7 @@ class Guy:
 
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
+        self._log=log
         if log: handler.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port, autoreload=autoreload )
@@ -989,7 +994,7 @@ var self= {
         size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
         self._id, # for the socket
-        "true" if logger.getEffectiveLevel()!=logging.ERROR else "false",
+        "true" if self._log else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
     )
 

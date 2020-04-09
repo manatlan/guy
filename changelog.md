@@ -1,3 +1,7 @@
+0.5.6: (09/04/2020)
+    fix: js log was always on. now: it depends if the log is activated or on server side too
+
+0.5.5: (26/03/2020)
 0.5.4: (26/03/2020)
  - FIX: on win, when freezed, cant be considered as module
  
