@@ -8,7 +8,6 @@ def test_render(runner):
 
         async def init(self):
             self.retour =await self.js.end()
-            self.exit()
 
         def render(self,path):
             return """
