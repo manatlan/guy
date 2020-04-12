@@ -1,34 +1,30 @@
-#!/usr/bin/python3 -u
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import guy
+from guy import Guy
+from datetime import datetime
 
+class Simple(Guy):
+    size=(200,400)
+    __doc__="""
 
-class TestPyCallJs(guy.Guy):
-    """
     <script>
-
-    function myjsmethod(a,b) { 
-        document.body.innerHTML+= `sync call (${a},${b})<br>`;
+    function set() {
+        localStorage["hello"]=new Date();
+        init()
     }
 
-    class Jo {
-        constructor() {}
-        add(a,b) {
-            alert(a+b)
-        }
+    function init() {
+        document.body.innerHTML += (localStorage["hello"] || "Empty");
     }
-    jo=new Jo()
 
     </script>
-    <button onclick="self.test_ok()">call js ok</button>
-    <br/>
-    """
-    size=(500, 300) # set the size of the client window
 
-    async def test_ok(self): 
-        r=await self.js["jo.add"]("Python World!",42)
-        print("==========js returns=========>",r)
-        return "ok sync"
+    <button onclick="set()">set</button>
+    """
+    async def init(self):
+        await self.js.init()
 
 if __name__ == "__main__":
-    TestPyCallJs().run(log=True)
+    x=Simple()
+    x.run(lockPort=22222) # 16:06:55
+    # x.serve()

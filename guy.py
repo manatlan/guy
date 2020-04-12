@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.5.5" #autoreload's version !
+__version__="0.6.0" #autoreload's version !
 
 import os,sys,re,traceback,copy,types
 from urllib.parse import urlparse
@@ -31,6 +31,8 @@ import tornado.web
 import tornado.websocket
 import tornado.platform.asyncio
 import tornado.autoreload
+import tornado.httpclient
+import websocket
 import platform
 import json
 import asyncio
@@ -178,6 +180,12 @@ class GuyJSHandler(tornado.web.RequestHandler):
             raise tornado.web.HTTPError(status_code=404)
 
 INST={}
+
+class FavIconHandler(tornado.web.RequestHandler):
+    def initialize(self, instance):
+        self.instance=instance
+    async def get(self):
+        self.write(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00@\x00\x00\x00@\x08\x06\x00\x00\x00\xaaiq\xde\x00\x00\x00\x06bKGD\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe4\x04\x0c\x0e-0\xf2:\xad\x05\x00\x00\x00\x1diTXtComment\x00\x00\x00\x00\x00Created with GIMPd.e\x07\x00\x00\x05\xf5IDATx\xda\xe5\x9b_\x88TU\x1c\xc7?\xbf3\x9b\xd4\x16n\x14\x06EP\x10\xe62[\xee\xae\xe3\x1f\xac\x07\xa1\xc8\x97\xc4\x82\x9e,C\xc6\xd6\xad\x85J\x84PL\xf2:\x9aI\x12\xd5\xa6%m\xd8\x1a\x8a\x04\xbdD\xf8\xa6F\x05A5\xbb\x9b\x8a\xfbG1\xa8\x08\xab\x87(#B\xddeN\x0fwf\x9d;s\xe7\xce\xb9g\xee\x9d?t\x1eg\xce\xfd\x9d\xf3\xf9\x9e\xdf\xfd\x9d\xdf\xf9\x9d\x19\xa1\x86\x96]\xa7Y\xf2\x91x>\x1b\xed\xd7\xf7\x00w\x03w\x02\xb7\x03\xf3\x80[\x80\xb9\xc0M@\xbb(\xe6 \xb4\x01\x02h`\x06\xb8\n\xfc\x0b\xfc\x03\\\x12\xc5\x1f\xc0\xef\xc0E\xe0g\xe0\x87\xdew\xe5W"nb\xfb\xe0h\x9f\xbe\x11X\n,\x03V\x00\xcbQtT\x1dP\x19\x8c* \x95\xfb\\\x00\xbe\x06\xbe@\x91\xed\xdd\'\xe3\x00#\x1b4\x8b?\x90\xe8\x05\x18Ik\x16\x0f\xbb\xddF\xd6\xeb\xf9\xc0\xa3\x08\xcf\x8a\xd0\xe9\xe9\xa8\xccF\x13\x83~&}J\xc6\xfbD\x14\xc3\xc0\xc9\x9eA\xb9\x1a\x89\x00\xd9\xb4f\xc9\xb00\xf2\xb4V\\\xc7c\xc0~\xe0\x0e\xdf\xd5i,|\xa9\xc7\x1c\x02\xf6\xf6\x0c\xcad\xcd\x1e\x90M\xeb\xb5"\x1c\x0e\x9c`s\xc1\x17\xb7\xef\x81\'{\x06e\xea\xd4FM\xcf\xa0T\x17\xa0\xb0\xea\xd9\xb4\xee\x04\xce\x8a\x90hQ\xf8\xe2vD\x84\xbe\xee\xb7\xe5J\xa0\xc9"\xf8\r\xc0dUxi\txD\xb1\x16\xe1\xf2\xe9M\xfa^\x80\xd3\x9bt\xb9\xd9"\xf8\xdd\xc0P\xa9a_x\x89\x06\xcc\n\x1ec\xf8\xe2v\xee\xf4&\xfdH\xf7[\xc2\x99\x97t\xf9:f\xd3z\x00x\xaf\xd4\xb85|"Fx[a\xddy\xaf\xec~S\x8e{>\xca\xa6\xf5\x02`\xea\x7f\x00_\xf8n\xfe\xc27\xe4B\xf1\x10\x07C\xc0\xefC\xb3\x14\xe8\x05v\x03\xd3\xb1\xc0Kl\xf0\xa0\xf8\x16\xe0\xccf\x8dd\xd3z>p\xde\x00\xfeC`CjHr\x9e\x8c\xf0y\rW\xd9\x0edZ`\xe5\x8bm\xf7-\xdc+\x07\x95\x08\xab\x03\xe1]#GSC\xf2L)<\xb8\xeb\x9f\x1a\x92\x9d\x92\xc0izx\xafW\xbdS\x18\xee\xfe@#\x8a\xcb\xa9!yjl@\xfb\x0e\x9cz_\x18\x1b\xd0,: ;\x81\xf3M\r\xef\x15\xa0\xfd\xccf\xfd\x80\x02\xae\x0f\x80\x07\xf8\x14`\xd1\x81\xca\xd1\xaf\xe8\xbb\xe1\x16\x81/\xb4\x95\n\x98\t\x80\x078\x1a\xe2l\xf1e\x0b\xc1\x03t\xab*\xf0\x00WB\x080]\xafh\xef\x0b\x15\x0e\x1e\xe06\x95/H\x04\xad\xc6\xe3\xa3\xfd\xba\xea|\xf21bY\xd8T\x19\xb1\x83/\xcb\x04\xa5$C4\xcbY\xa6\xbd\x02\xf8\x0f\xbe.5T\xddR>\x0e\xa4\x8d\xf3\xf4\xb8\xe0%T\xc26\xad\x0cNv\xed\xa3\xfdz[\xbe\xdc\x15\xe4\x01k\x80T\x0b\xc1\xcfbk\x83c\xed\xabc\x03\xfa\x85RO\x18}N\x17\xe0\x9f\x00\x8e6\n\x1eKx\x00\x19\xed\xd7\x87\x80u\x86u\xbc1`\x1f0\x92/dv\x03\x03\xc0\n[x\x94\xc1\x9c\xab\xc0\xcf~\xa7\xc2\xc1\x03\'\xda\xca\x82`\xf0\xa4\x17U\xdc\xebM\x83^Xxb\x837x,\xee\x82\x06\x16\xb6#\x84\xbf\x16\x03\x9a\xb7\x9a\x13\r\xbc\n\x95\x8359<\x16\xf0\x12<=\xddR\xf0*:x_\x01\x9a\xac\x8eg\ro\xba%z\x04h\xca\x82\x86%\xbc\xd1<\x816\xdc\x0b\xc9\xbf\x1aX\xca\xba\xd9\xa2\x9a\x13\t\xbc\xe9\x91%\xd6vj\xa3\x9e\x11E\xa2\x11\xf0\xc0\t\xd5`\xf8\x86\xad<!L\xd7\xb7\xd5\x11\xbe\xe1\x02\x94]X\x06\x171k\x8bM>;\x92(h;\xbbM\x0f\x16\x0eC:\x17\xde\x90\xceU=M\xb8-W\xd4\x1f\xcf3\t\xcbj\x8e\xf5\xcaK\x91\xed6\xdc\xa2hGa\xf0\xb0"\xcc>\xa3\r|-W\xd4_\x8a\x9ei\x10\xbc\xef+`eT\x19\xba\xab\xaa\x0c\x1a\n\x9eh\xe0\xdd)\xa9\x88\x8c\x9b\x8a \xe5c\x84\xac\xe3\x19%l&\xf0HaM,\xd3V+\x11JV]j\xa8\xe6\xd8\xec.\xa5\xf3P\xb5\x1e\\j\x15\xa1\x1e\xf0A\xb7\xdc*\x8a\xd3\x9bu\xca\xdc`x\x7f\xe7\x8fJ\x84DHOh\x00<\x80\xc9\xcdP\xbc\x9e\xd0@xQyTS\x11\x90\xfa\x01\xd4\x03\xde\x83\x19t(\xa9eg\xb0\xde\xb6\xea\x00_\xb6\xcea\x1f\x8e\x0b\xc8z\x0c\x8b\xf9\xab(\x8cD)\x82qBe"\x9a\xc1\xbc\x15%W\xda\x15E ~\x11\xac\xe1\xc50\x86\x95\xb7\x19\x05\\2RT\xc5+\x82-|\xa5\xeb6\xc3]\xeco\x05\xfcb\xecVq\x89 \xf6\xf0b\x0f\x0fpQ\x01\x93\xa1\xde\xad\xa8E\xb0\xad\xe6\xd4\x0e\x0fpN\x01\xdf\x85\x0e0Q\x8a\xd08x\x80\xac\x00\x8c\xef\xd0Sh\x16\x18U\x7f|\xaa<\x81}\xa2n\xd1\xc1\xd3\x95\x11W\x7f\x11\xf6cy\xbd\x1dG\xfa[\x13\xbca\xc2&\t\x8e\x00\xa8\x89\x9d\x1ar\x1c\x14\x83@$b&B,\xa5VSx\xd3\x1b(\xcd\xa0gM\'2:\x03l\xd7\x9a\xaa\xf5=\xdf>1\xbe\x0e\xa6\xc2\x87\xb8~\xfb&\xe9\xc8\xf2Y3\x13\x19M\xd2\x11\xa7\xe2`1N\xa8\x01\xf0\x00k<\xa6\x92\xce\xec\x08\xf75\x93\x081\xc1\xafO:\xf2\xa3\xaf\xb9\xa4#\xe3\xc0J\xe3@"f\xef\x7fT\x15\xdc\x08\xe0\xf7&\x1d\x19\x9e\xd8U\xe1\xa7\x91\x13\xbb4IG\x8e\x03\x0fZ\x18\xaf92{6\x1b\x89\xe6<R\xd4g[\xd2\x91-\x13\x19M\xf2\x15\xa9rDp\xe3\xc2<\xe0+\xa0\xd3$\x98\xf9\xf6)\xfdL\xe7\x03h\x0c\xc7\xda*v\x1eN:\xf2\xf9\xf8\x0eM\xd7\x0e18#y\x85X\r\x1c\xd69\xe6\xd6C\x84\x88\xe1\xf7\x90\xc3Ifdz\xea\xf5\x1c\x9d[\x94\x89\xb3^kS\xafi\x92\x8e|\x96t\xa4\x03\xe1!\xe0\xe3\x9a_\x87\x80,-"\xf8\x9f\x80\x17\x81\xf6\xa4#/\xa3\xdc\xe3\xbe\x1f\xfcV\x8e]3\xbf\x95c\xeca\x95\xd1;:\xee\xe8^\xdc_\x86w\x01w\x01\xb7\x02s\ns\xd49n@\xd3\x81{\xef(\xb3\x9e \x95\xbd\xc5\x02~\x1a\xf8\x13\xf7\xaf\xf5\x93@\x168\xd9\x95\x91\xdf\xf2s\xa4+S\xd9\xc1\xb7rL\xf6\xb0J\xff\x07\xf42b\xc4\x0f\x9fW\xda\x00\x00\x00\x00IEND\xaeB`\x82')
 
 class MainHandler(tornado.web.RequestHandler):
 
@@ -399,6 +407,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
             (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
+            (r'/favicon.ico',               FavIconHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
         ])
         self.app.listen(self.port,address=self.host)
@@ -431,9 +440,9 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         return "http://localhost:%s/#%s" % (self.port,self.instance._name) #anchor is important ! (to uniqify ressource in webbrowser)
 
 
+
 class ChromeApp:
-    def __init__(self, url, size=None, chromeArgs=[]):
-        self.__instance = None
+    def __init__(self, appname="driver",size=None,lockPort=None):
 
         def find_chrome_win():
             import winreg  # TODO: pip3 install winreg
@@ -464,26 +473,79 @@ class ChromeApp:
                 except webbrowser.Error:
                     exe = None
 
-        if exe:
-            args = [exe, "--app=" + url] + chromeArgs
-            # args.append("--aggressive-cache-discard")
-            if size == FULLSCREEN:
-                args.append("--start-fullscreen")
-            if tempfile.gettempdir():
-                args.append(
-                    "--user-data-dir=%s"
-                    % os.path.join(tempfile.gettempdir(), ".guyapp_"+re.sub(r"[^a-zA-Z]","_",url))
-                )
-            logger.debug("CHROME APP-MODE: %s",args)
-            self.__instance = subprocess.Popen(args)
+        if lockPort:
+            debugport=lockPort
         else:
+            debugport = 9222
+            while not isFree("localhost", debugport):
+                debugport += 1
+
+        if not exe:
             raise Exception("no chrome browser, no app-mode !")
+        else:
+            args = [ #https://peter.sh/experiments/chromium-command-line-switches/
+                exe,
+                "--remote-debugging-port=%s" % debugport,
+                "--app=http://localhost:%s" % debugport,
+                "--aggressive-cache-discard",
+                "--disk-cache-dir=MYCACHE",
+                "--user-data-dir=MYCACHE/%s%s" % (appname,debugport),
+                "--app-id=%s%s" % (appname,debugport),
+                "--app-auto-launched",
+                "--no-first-run",
+                "--no-default-browser-check",
+            ]
+            if size:
+                if size == FULLSCREEN:
+                    args.append("--start-fullscreen")
+                else:
+                    args.append( "--window-size=%s,%s" % (size[0],size[1]) )
+
+            logger.debug("CHROME APP-MODE: %s"," ".join(args))
+            self._p = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+            http_client = tornado.httpclient.HTTPClient()
+            self._ws = None
+            while self._ws == None:
+                try:
+                    url = http_client.fetch("http://localhost:%s/json" % debugport).body
+                    self._ws = json.loads(url)[0]["webSocketDebuggerUrl"]
+                except Exception as e:
+                    self._ws = None
 
     def wait(self):
-        self.__instance.wait()
+        self._p.wait()
+
+    def __del__(self): # really important !
+        self._p.kill()
+
+    def _com(self, payload: dict):
+        """ https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-close """
+        payload["id"] = 1
+        try:
+            ws = websocket.create_connection(self._ws)
+            ws.send(json.dumps(payload))
+            r=ws.recv() 
+            ws.close()
+            return json.loads(r)["result"] or True
+        except:
+            logger.debug("ChromeApp._com(): Can't communicate with chrome instance")
+            return False
+
+    def isRunning(self):
+        info=self._com(dict(method="Page.getNavigationHistory"))
+        return not info["currentIndex"]<0
+
+    def focus(self):
+        return self._com(dict(method="Page.bringToFront"))
+
+    def navigate(self, url):
+        return self._com(dict(method="Page.navigate", params={"url": url}))
 
     def exit(self):
-        self.__instance.kill()
+        self._com(dict(method="Browser.close"))
+        self._p.kill()
+
 
 
 class ChromeAppCef:
@@ -626,7 +688,7 @@ class Guy:
         asyncio.ensure_future( doInit(self) )
 
 
-    def run(self,log=False,autoreload=False):
+    def run(self,log=False,autoreload=False,lockPort=None):
         """ Run the guy's app in a windowed env (one client)"""
         self._log=log
         if log: handler.setLevel(logging.DEBUG)
@@ -637,19 +699,25 @@ class Guy:
             ws=WebServer( self, autoreload=autoreload )
             ws.start()
 
-            app=ChromeApp(ws.startPage,self.size)
+            app=ChromeApp(self._name,self.size,lockPort=lockPort)
+            if app.isRunning(): # only true when lockport, and running instance
+                print("ALREADY RUNNING")
+                app.focus()
+                time.sleep(0.1)
+            else:
+                app.navigate(ws.startPage)
 
-            def exit():
-                ws.exit()
-                app.exit()
+                def exit():
+                    ws.exit()
+                    app.exit()
 
-            tornado.autoreload.add_reload_hook(exit)
+                tornado.autoreload.add_reload_hook(exit)
 
-            self._callbackExit = exit
-            try:
-                app.wait() # block
-            except KeyboardInterrupt:
-                print("-Process stopped")
+                self._callbackExit = exit
+                try:
+                    app.wait() # block
+                except KeyboardInterrupt:
+                    print("-Process stopped")
 
             ws.exit()
             ws.join()
@@ -764,7 +832,6 @@ class Guy:
         logger.debug("ROUTES: %s",routes)
         js = """
 document.addEventListener("DOMContentLoaded", function(event) {
-    %s
     %s
 },true)
 
@@ -991,7 +1058,6 @@ var self= {
 
 
 """ % (
-        size and "window.resizeTo(%s,%s);" % (size[0], size[1]) or "",
         'if(!document.title) document.title="%s";' % self._name,
         self._id, # for the socket
         "true" if self._log else "false",

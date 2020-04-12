@@ -1,3 +1,5 @@
+0.6 THE FUTURE
+
 0.5.6: (09/04/2020)
     fix: js log was always on. now: it depends if the log is activated or on server side too
 
