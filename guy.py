@@ -549,7 +549,7 @@ class ChromeApp:
 
 
 class ChromeAppCef:
-    def __init__(self, url, size=None, chromeArgs=None):  # chromeArgs is not used
+    def __init__(self, url, size=None, chromeArgs=None,lockPort=None):  # chromeArgs is not used
         import pkgutil
 
         assert pkgutil.find_loader("cefpython3"), "cefpython3 not available"
@@ -582,6 +582,9 @@ class ChromeAppCef:
                     devtools=True,
                 ),
             }
+            if lockPort:
+                settings["remote_debugging_port"]=lockPort
+
             cef.Initialize(settings, {})
             b = cef.CreateBrowserSync(windowInfo, url=url)
 
@@ -701,7 +704,7 @@ class Guy:
 
             app=ChromeApp(self._name,self.size,lockPort=lockPort)
             if app.isRunning(): # only true when lockport, and running instance
-                print("ALREADY RUNNING")
+                print("*** ALREADY RUNNING")
                 app.focus()
                 time.sleep(0.1)
             else:
@@ -724,15 +727,29 @@ class Guy:
 
         return self
 
-    def runCef(self,log=False,autoreload=False):
+    def runCef(self,log=False,autoreload=False,lockPort=None):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         self._log=log
         if log: handler.setLevel(logging.DEBUG)
 
+        if lockPort:
+            if not isFree("localhost", lockPort):
+                try:
+                    print("*** ALREADY RUNNING")
+                    http_client = tornado.httpclient.HTTPClient()
+                    url = http_client.fetch("http://localhost:%s/json" % lockPort).body
+                    wsurl= json.loads(url)[0]["webSocketDebuggerUrl"]
+                    ws = websocket.create_connection(wsurl)
+                    ws.send(json.dumps(dict(id=1,method="Runtime.evaluate",params={"expression": "alert('Already Running')"})))
+                    ws.close()
+                    return
+                except:
+                    pass
+
         ws=WebServer( self, autoreload=autoreload )
         ws.start()
 
-        app=ChromeAppCef(ws.startPage,self.size)
+        app=ChromeAppCef(ws.startPage,self.size,lockPort=lockPort)
 
         tornado.autoreload.add_reload_hook(app.exit)
 
