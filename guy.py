@@ -56,11 +56,11 @@ class JSException(Exception): pass
 
 handler = logging.StreamHandler()
 handler.setFormatter( logging.Formatter('-%(asctime)s %(name)s [%(levelname)s]: %(message)s') )
+handler.setLevel(logging.ERROR)
 logger = logging.getLogger("guy")
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
-handler.setLevel(logging.ERROR)
 
 def isFree(ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -503,7 +503,7 @@ class ChromeApp:
                     args.append( "--window-size=%s,%s" % (size[0],size[1]) )
 
             logger.debug("CHROME APP-MODE: %s"," ".join(args))
-            self._p = subprocess.Popen(args, stdout=subprocess.PIPE)
+            self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             http_client = tornado.httpclient.HTTPClient()
             self._ws = None
@@ -549,7 +549,7 @@ class ChromeApp:
 
 
 
-class ChromeAppCef:
+class CefApp:
     def __init__(self, url, size=None, chromeArgs=None,lockPort=None):  # chromeArgs is not used
         import pkgutil
 
@@ -696,7 +696,7 @@ class Guy:
     def run(self,log=False,autoreload=False,lockPort=None):
         """ Run the guy's app in a windowed env (one client)"""
         self._log=log
-        if log: handler.setLevel(logging.DEBUG)
+        if log: logger.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
@@ -732,7 +732,7 @@ class Guy:
     def runCef(self,log=False,autoreload=False,lockPort=None):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         self._log=log
-        if log: handler.setLevel(logging.DEBUG)
+        if log: logger.setLevel(logging.DEBUG)
 
         if lockPort:
             if not isFree("localhost", lockPort):
@@ -751,7 +751,7 @@ class Guy:
         ws=WebServer( self, autoreload=autoreload )
         ws.start()
 
-        app=ChromeAppCef(ws.startPage,self.size,lockPort=lockPort)
+        app=CefApp(ws.startPage,self.size,lockPort=lockPort)
 
         tornado.autoreload.add_reload_hook(app.exit)
 
@@ -768,7 +768,7 @@ class Guy:
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
         self._log=log
-        if log: handler.setLevel(logging.DEBUG)
+        if log: logger.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port, autoreload=autoreload )
         ws.start()

@@ -6,7 +6,9 @@
     cef-mode: when lockPort -> avoid running another & display a mbox ;-)
     cef-mode: keeps cache 
     app-mode: resize browser at start (no more js based)
-    
+    app-mode: chrome process outputs to null
+    fix: logging server side
+
 0.5.6: (09/04/2020)
     fix: js log was always on. now: it depends if the log is activated or on server side too
 
