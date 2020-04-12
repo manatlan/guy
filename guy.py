@@ -51,6 +51,7 @@ import io
 class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
 FOLDERSTATIC="static"
+CHROMECACHE=".cache"
 class JSException(Exception): pass
 
 handler = logging.StreamHandler()
@@ -488,8 +489,8 @@ class ChromeApp:
                 "--remote-debugging-port=%s" % debugport,
                 "--app=http://localhost:%s" % debugport,
                 "--aggressive-cache-discard",
-                "--disk-cache-dir=MYCACHE",
-                "--user-data-dir=MYCACHE/%s%s" % (appname,debugport),
+                "--disk-cache-dir=%s" % CHROMECACHE,
+                "--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,debugport),
                 "--app-id=%s%s" % (appname,debugport),
                 "--app-auto-launched",
                 "--no-first-run",
@@ -573,7 +574,7 @@ class ChromeAppCef:
             settings = {
                 "product_version": "Guy/%s" % __version__,
                 "user_agent": "Guy/%s (%s)" % (__version__, platform.system()),
-                "cache_path":"MYCACHE",
+                "cache_path": CHROMECACHE,
                 "context_menu": dict(
                     enabled=True,
                     navigation=False,

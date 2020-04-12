@@ -1,7 +1,9 @@
 0.6 THE FUTURE
-    lockport available in app & cef mode : let run one instance only
-    app-mode: when lockport -> focus on current running
-    cef-mode: when lockport -> avoid running another & display a mbox ;-)
+    lockPort available in app & cef mode : let run one instance only
+    app-mode: new ChromeApp, better interaction with chrome !!
+    app-mode & cef-mode : chrome caches stored belongs the guy's app
+    app-mode: when lockPort -> focus on current running
+    cef-mode: when lockPort -> avoid running another & display a mbox ;-)
     cef-mode: keeps cache 
     app-mode: resize browser at start (no more js based)
     
