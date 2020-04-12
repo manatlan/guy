@@ -573,6 +573,7 @@ class ChromeAppCef:
             settings = {
                 "product_version": "Guy/%s" % __version__,
                 "user_agent": "Guy/%s (%s)" % (__version__, platform.system()),
+                "cache_path":"MYCACHE",
                 "context_menu": dict(
                     enabled=True,
                     navigation=False,
