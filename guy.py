@@ -1137,6 +1137,7 @@ var self= {
         ret= function(*args)
 
         if isinstance(ret,Guy):
+            print("*** DEPRECATED ***, will be removed in near future")
             ################################################################
             o=ret
 

@@ -1,13 +1,12 @@
 0.6 THE FUTURE
-    lockPort available in app & cef mode : let run one instance only
+    lockPort available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome !
     app-mode: new ChromeApp, better interaction with chrome !!
-    app-mode & cef-mode : chrome caches stored belongs the guy's app
     app-mode: when lockPort -> focus on current running
     cef-mode: when lockPort -> avoid running another & display a mbox ;-)
-    cef-mode: keeps cache 
     app-mode: resize browser at start (no more js based)
     app-mode: chrome process outputs to null
     fix: logging server side
+    the use of embed window (returning guy class) is now (really) deprecated (wants to simplify)
 
 0.5.6: (09/04/2020)
     fix: js log was always on. now: it depends if the log is activated or on server side too
