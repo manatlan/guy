@@ -6,10 +6,8 @@ class T(Guy):
     async function storage(mode) {
         switch(mode) {
             case "get":
-                alert(localStorage["var"])
                 return localStorage["var"]==42;
             case "set":
-                alert(localStorage["var"])
                 localStorage["var"]=42;
                 return true
         }
@@ -56,4 +54,4 @@ def test_no_lockPort(runner):
 
 #     t=T("get")
 #     r=runner(t,lockPort=lockPort)
-#     assert r.ok==True
+#     assert r.ok==True                 # localStorage is persistent !
