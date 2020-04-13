@@ -487,14 +487,12 @@ class ChromeApp:
             args = [ #https://peter.sh/experiments/chromium-command-line-switches/
                 exe,
                 "--remote-debugging-port=%s" % debugport,
-                "--app=http://localhost:%s" % debugport,
-                "--aggressive-cache-discard",
-                "--disk-cache-dir=%s" % CHROMECACHE,
-                "--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,debugport),
+                "--app=http://localhost:%s" % debugport, # need a real http page (here the debug page) #TODO: serve a splah screen
                 "--app-id=%s%s" % (appname,debugport),
                 "--app-auto-launched",
                 "--no-first-run",
                 "--no-default-browser-check",
+                "--disable-notifications",
             ]
             if size:
                 if size == FULLSCREEN:
@@ -502,7 +500,21 @@ class ChromeApp:
                 else:
                     args.append( "--window-size=%s,%s" % (size[0],size[1]) )
 
+            if lockPort: #enable reusable cache folder (coz only one instance can be runned)
+                args.append("--disk-cache-dir=%s" % CHROMECACHE)
+                args.append("--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,debugport))
+            else:
+                tempfolder=tempfile.gettempdir()
+                args.append("--user-data-dir=%s/%s%s" % (tempfolder,appname,debugport))
+                args.append("--aggressive-cache-discard")
+                args.append("--disable-cache")
+                args.append("--disable-application-cach")
+                args.append("--disable-offline-load-stale-cache")
+                args.append("--disk-cache-size=0")
+                args.append("--incognito")
+
             logger.debug("CHROME APP-MODE: %s"," ".join(args))
+            # self._p = subprocess.Popen(args)
             self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             http_client = tornado.httpclient.HTTPClient()
@@ -574,7 +586,6 @@ class CefApp:
             settings = {
                 "product_version": "Guy/%s" % __version__,
                 "user_agent": "Guy/%s (%s)" % (__version__, platform.system()),
-                "cache_path": CHROMECACHE,
                 "context_menu": dict(
                     enabled=True,
                     navigation=False,
@@ -586,6 +597,7 @@ class CefApp:
             }
             if lockPort:
                 settings["remote_debugging_port"]=lockPort
+                settings["cache_path"]= CHROMECACHE
 
             cef.Initialize(settings, {})
             b = cef.CreateBrowserSync(windowInfo, url=url)
