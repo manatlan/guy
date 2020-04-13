@@ -302,8 +302,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
-
-        instance = WebSocketHandler.clients[self]
+        instance = WebSocketHandler.clients.get(self,None)
+        if instance is None:
+            return
 
         o = jLoads(message)
         logger.debug("WS RECEPT: %s",o)
