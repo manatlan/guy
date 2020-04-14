@@ -44,14 +44,10 @@ def test_no_lockPort(runner):
 # def test_lockPort(runner):
 #     lockPort=28417
 
-#     t=T("get")
-#     r=runner(t,lockPort=lockPort)
-#     assert r.ok==False
-
 #     t=T("set")
 #     r=runner(t,lockPort=lockPort)
 #     assert r.ok==True
 
 #     t=T("get")
 #     r=runner(t,lockPort=lockPort)
-#     assert r.ok==True                 # localStorage is persistent !
+#     assert r.ok==True                 # localStorage is persistent ! (but trouble with pytests/ioloop)
