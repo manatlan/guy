@@ -1,3 +1,6 @@
+0.5.7: (14/04/2020)
+    fix: dead socket on on_message
+
 0.5.6: (09/04/2020)
     fix: js log was always on. now: it depends if the log is activated or on server side too
 
