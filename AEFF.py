@@ -27,6 +27,6 @@ class Simple(Guy):
 if __name__ == "__main__":
     x=Simple()
     # x.runCef(lockPort=22222)
-    x.run(lockPort=22222,log=False) # 16:06:55
+    x.run(lockPort=22222,log=False) # 11:21
     # x.run() # 16:06:55
     # x.serve()
