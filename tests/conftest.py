@@ -1,4 +1,4 @@
-import pytest,time
+import pytest,time,asyncio
 
 # @pytest.fixture(params=["run","runCef","serve"])
 @pytest.fixture(params=["run","runCef"])
@@ -14,3 +14,10 @@ def runner(request):
             return getattr(ga,request.param)(**kargs)
 
     return _
+
+# @pytest.yield_fixture(scope='session')
+# def event_loop(request):
+#     """Create an instance of the default event loop for each test case."""
+#     loop = asyncio.get_event_loop_policy().new_event_loop()
+#     yield loop
+#     loop.close()    

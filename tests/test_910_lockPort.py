@@ -37,17 +37,14 @@ def test_no_lockPort(runner):
     r=runner(t)
     assert r.ok==False
 
-## can't work as expected
-## btw, it works manually
-## but not in tnr ;-(
 
-# def test_lockPort(runner):
-#     lockPort=28417
+def test_lockPort(): # app mode only (broken with cef ... coz ioloop/pytests)
+    lockPort=28417
 
-#     t=T("set")
-#     r=runner(t,lockPort=lockPort)
-#     assert r.ok==True
+    t=T("set")
+    r=t.run(lockPort=lockPort)
+    assert r.ok==True
 
-#     t=T("get")
-#     r=runner(t,lockPort=lockPort)
-#     assert r.ok==True                 # localStorage is persistent ! (but trouble with pytests/ioloop)
+    t=T("get")
+    r=t.run(lockPort=lockPort)
+    assert r.ok==True                 # localStorage is persistent !
