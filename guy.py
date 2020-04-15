@@ -24,7 +24,7 @@
 
 __version__="0.6.0" #autoreload's version !
 
-import os,sys,re,traceback,copy,types
+import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
 from threading import Thread
 import tornado.web
@@ -499,21 +499,13 @@ class ChromeApp:
                 except webbrowser.Error:
                     exe = None
 
-        if lockPort:
-            debugport=lockPort
-        else:
-            debugport = 9222
-            while not isFree("localhost", debugport):
-                debugport += 1
-
         if not exe:
             raise Exception("no chrome browser, no app-mode !")
         else:
             args = [ #https://peter.sh/experiments/chromium-command-line-switches/
                 exe,
-                "--remote-debugging-port=%s" % debugport,
                 "--app=" + url, # need to be a real http page !
-                "--app-id=%s%s" % (appname,debugport),
+                "--app-id=%s" % (appname),
                 "--app-auto-launched",
                 "--no-first-run",
                 "--no-default-browser-check",
@@ -526,51 +518,56 @@ class ChromeApp:
                     args.append( "--window-size=%s,%s" % (size[0],size[1]) )
 
             if lockPort: #enable reusable cache folder (coz only one instance can be runned)
+                self.cacheFolder=None
+                args.append("--remote-debugging-port=%s" % lockPort)
                 args.append("--disk-cache-dir=%s" % CHROMECACHE)
-                args.append("--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,debugport))
+                args.append("--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,lockPort))
             else:
-                tempfolder=tempfile.gettempdir()
-                args.append("--user-data-dir=%s/%s%s" % (tempfolder,appname,debugport))
+                self.cacheFolder=os.path.join(tempfile.gettempdir(),appname+"_"+str(os.getpid()))
+                args.append("--user-data-dir=" + self.cacheFolder) 
                 args.append("--aggressive-cache-discard")
                 args.append("--disable-cache")
-                args.append("--disable-application-cach")
+                args.append("--disable-application-cache")
                 args.append("--disable-offline-load-stale-cache")
                 args.append("--disk-cache-size=0")
 
             logger.debug("CHROME APP-MODE: %s"," ".join(args))
-            # self._p = subprocess.Popen(args)
-            self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self._p = subprocess.Popen(args)
+            #~ self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-            http_client = tornado.httpclient.HTTPClient()
-            self._ws = None
-            while self._ws == None:
-                try:
-                    url = http_client.fetch("http://localhost:%s/json" % debugport).body
-                    self._ws = json.loads(url)[0]["webSocketDebuggerUrl"]
-                except Exception as e:
-                    self._ws = None
+            #~ if lockPort:
+                #~ http_client = tornado.httpclient.HTTPClient()
+                #~ self._ws = None
+                #~ while self._ws == None:
+                    #~ try:
+                        #~ url = http_client.fetch("http://localhost:%s/json" % debugport).body
+                        #~ self._ws = json.loads(url)[0]["webSocketDebuggerUrl"]
+                    #~ except Exception as e:
+                        #~ self._ws = None
 
     def wait(self):
         self._p.wait()
 
     def __del__(self): # really important !
         self._p.kill()
+        if self.cacheFolder: shutil.rmtree(self.cacheFolder, ignore_errors=True)
             
-    def _com(self, payload: dict):
-        """ https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-close """
-        payload["id"] = 1
-        r=json.loads(wsquery(self._ws,json.dumps(payload)))["result"]
-        return r or True
+    #~ def _com(self, payload: dict):
+        #~ """ https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-close """
+        #~ payload["id"] = 1
+        #~ r=json.loads(wsquery(self._ws,json.dumps(payload)))["result"]
+        #~ return r or True
 
-    def focus(self): # not used
-        return self._com(dict(method="Page.bringToFront"))
+    #~ def focus(self): # not used
+        #~ return self._com(dict(method="Page.bringToFront"))
 
-    def navigate(self, url): # not used
-        return self._com(dict(method="Page.navigate", params={"url": url}))
+    #~ def navigate(self, url): # not used
+        #~ return self._com(dict(method="Page.navigate", params={"url": url}))
 
     def exit(self):
-        self._com(dict(method="Browser.close"))
+        #~ self._com(dict(method="Browser.close"))
         self._p.kill()
+        shu
 
 
 

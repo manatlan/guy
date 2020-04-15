@@ -1,6 +1,6 @@
 0.6 THE FUTURE
     new logo: and rendered as default favicon.ico
-    lockPort available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome !
+    lockPort available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)
     app-mode: new ChromeApp, better interaction with chrome !!
     app-mode: when lockPort -> focus on current running (win+*nix)
     cef-mode: when lockPort -> focus on current running (win only!!!) (broken on *nix)
