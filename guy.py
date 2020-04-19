@@ -86,6 +86,7 @@ async def callhttp(web,path): # web: RequestHandler
             else:
                 ret=method(web,*g.groups())
             if isinstance(ret,Guy):
+                print("*** DEPRECATED ***, will be removed in near future")
                 ret.parent = web.instance
                 web.write( ret._renderHtml() )
             return True
@@ -518,13 +519,13 @@ class ChromeApp:
                     args.append( "--window-size=%s,%s" % (size[0],size[1]) )
 
             if lockPort: #enable reusable cache folder (coz only one instance can be runned)
-                self.cacheFolder=None
+                self.cacheFolderToRemove=None
                 args.append("--remote-debugging-port=%s" % lockPort)
                 args.append("--disk-cache-dir=%s" % CHROMECACHE)
-                args.append("--user-data-dir=%s/%s%s" % (CHROMECACHE,appname,lockPort))
+                args.append("--user-data-dir=%s/%s" % (CHROMECACHE,appname))
             else:
-                self.cacheFolder=os.path.join(tempfile.gettempdir(),appname+"_"+str(os.getpid()))
-                args.append("--user-data-dir=" + self.cacheFolder) 
+                self.cacheFolderToRemove=os.path.join(tempfile.gettempdir(),appname+"_"+str(os.getpid()))
+                args.append("--user-data-dir=" + self.cacheFolderToRemove) 
                 args.append("--aggressive-cache-discard")
                 args.append("--disable-cache")
                 args.append("--disable-application-cache")
@@ -532,8 +533,8 @@ class ChromeApp:
                 args.append("--disk-cache-size=0")
 
             logger.debug("CHROME APP-MODE: %s"," ".join(args))
-            self._p = subprocess.Popen(args)
-            #~ self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            # self._p = subprocess.Popen(args)
+            self._p = subprocess.Popen(args,stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
             #~ if lockPort:
                 #~ http_client = tornado.httpclient.HTTPClient()
@@ -550,7 +551,7 @@ class ChromeApp:
 
     def __del__(self): # really important !
         self._p.kill()
-        if self.cacheFolder: shutil.rmtree(self.cacheFolder, ignore_errors=True)
+        if self.cacheFolderToRemove: shutil.rmtree(self.cacheFolderToRemove, ignore_errors=True)
             
     #~ def _com(self, payload: dict):
         #~ """ https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-close """
@@ -567,7 +568,6 @@ class ChromeApp:
     def exit(self):
         #~ self._com(dict(method="Browser.close"))
         self._p.kill()
-        shu
 
 
 
@@ -673,12 +673,45 @@ async def doInit( instance ):
 
 def chromeBringToFront(port):
     if not isFree("localhost", port):
-        print("*** ALREADY RUNNING")
         http_client = tornado.httpclient.HTTPClient()
         url = http_client.fetch("http://localhost:%s/json" % port).body
         wsurl= json.loads(url)[0]["webSocketDebuggerUrl"]
         wsquery(wsurl,json.dumps(dict(id=1,method="Page.bringToFront")))
         return True        
+
+class LockPortFile:
+    def __init__(self,name):
+        self._file = os.path.join(CHROMECACHE,name,"lockport")
+
+    def bringToFront(self):
+        if os.path.isfile(self._file): # the file is here, perhaps it's running
+            with open(self._file,"r") as fid:
+                port=fid.read()
+            
+            if not isFree("localhost", int(port)): # if port is taken, perhaps it's running
+                http_client = tornado.httpclient.HTTPClient()
+                url = http_client.fetch("http://localhost:%s/json" % port).body
+                wsurl= json.loads(url)[0]["webSocketDebuggerUrl"]
+                print("*** ALREADY RUNNING")
+                wsquery(wsurl,json.dumps(dict(id=1,method="Page.bringToFront")))
+                return True
+    
+    def create(self) -> int:
+        if os.path.isfile(self._file):
+            os.unlink(self._file)
+        # find a freeport
+        port=9990
+        while not isFree("localhost", port):
+            port += 1
+
+        if not os.path.isdir( os.path.dirname(self._file)):
+            os.makedirs( os.path.dirname(self._file) )
+        with open(self._file,"w") as fid:
+            fid.write(str(port))
+
+        return port
+
+
 
 
 class Guy:
@@ -725,7 +758,7 @@ class Guy:
         asyncio.ensure_future( doInit(self) )
 
 
-    def run(self,log=False,autoreload=False,lockPort=None):
+    def run(self,log=False,autoreload=False,one=False):
         """ Run the guy's app in a windowed env (one client)"""
         self._log=log
         if log: logger.setLevel(logging.DEBUG)
@@ -733,7 +766,13 @@ class Guy:
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
         else:
-            if lockPort and chromeBringToFront(lockPort): return
+            lockPort=None
+            if one:
+                lp=LockPortFile(self._name)
+                if lp.bringToFront():
+                    return
+                else:
+                    lockPort = lp.create()
             
             ws=WebServer( self, autoreload=autoreload )
             ws.start()
@@ -757,12 +796,18 @@ class Guy:
 
         return self
 
-    def runCef(self,log=False,autoreload=False,lockPort=None):
+    def runCef(self,log=False,autoreload=False,one=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         self._log=log
         if log: logger.setLevel(logging.DEBUG)
 
-        if lockPort and chromeBringToFront(lockPort): return
+        lockPort=None
+        if one:
+            lp=LockPortFile(self._name)
+            if lp.bringToFront():
+                return
+            else:
+                lockPort = lp.create()
 
         ws=WebServer( self, autoreload=autoreload )
         ws.start()
