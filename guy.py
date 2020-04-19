@@ -695,6 +695,7 @@ class LockPortFile:
                 print("*** ALREADY RUNNING")
                 wsquery(wsurl,json.dumps(dict(id=1,method="Page.bringToFront")))
                 return True
+
     
     def create(self) -> int:
         if os.path.isfile(self._file):
