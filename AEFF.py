@@ -26,7 +26,7 @@ class Simple(Guy):
 
 if __name__ == "__main__":
     x=Simple()
-    x.runCef(one=True)
-    # x.run(one=True,log=False) # 11:21
+    # x.runCef(one=True)
+    x.run(one=True,log=False) # 11:21
     # x.run() # 16:06:55
     # x.serve()

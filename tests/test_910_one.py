@@ -38,13 +38,11 @@ def test_no_lockPort(runner):
     assert r.ok==False
 
 
-def test_lockPort(): # app mode only (broken with cef ... coz ioloop/pytests)
-    lockPort=28417
+# def test_lockPort(): # app mode only (broken with cef ... coz ioloop/pytests)
+#     t=T("set")
+#     r=t.run(one=True)
+#     assert r.ok==True
 
-    t=T("set")
-    r=t.run(lockPort=lockPort)
-    assert r.ok==True
-
-    t=T("get")
-    r=t.run(lockPort=lockPort)
-    assert r.ok==True                 # localStorage is persistent !
+#     t=T("get")
+#     r=t.run(one=True)
+#     assert r.ok==True                 # localStorage is persistent !
