@@ -469,7 +469,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
 
 class ChromeApp:
-    def __init__(self, url, appname="driver",size=None,lockPort=None):
+    def __init__(self, url, appname="driver",size=None,lockPort=None,chromeargs=[]):
 
         def find_chrome_win():
             import winreg  # TODO: pip3 install winreg
@@ -511,7 +511,9 @@ class ChromeApp:
                 "--no-first-run",
                 "--no-default-browser-check",
                 "--disable-notifications",
-            ]
+                "--disable-features=TranslateUI",
+                #~ "--no-proxy-server",
+            ] + chromeargs
             if size:
                 if size == FULLSCREEN:
                     args.append("--start-fullscreen")
@@ -759,10 +761,12 @@ class Guy:
         asyncio.ensure_future( doInit(self) )
 
 
-    def run(self,log=False,autoreload=False,one=False):
+    def run(self,log=False,autoreload=False,one=False,args=[]):
         """ Run the guy's app in a windowed env (one client)"""
         self._log=log
-        if log: logger.setLevel(logging.DEBUG)
+        if log: 
+            handler.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
         if ISANDROID: #TODO: add executable for kivy/iOs mac/apple
             runAndroid(self)
@@ -778,7 +782,7 @@ class Guy:
             ws=WebServer( self, autoreload=autoreload )
             ws.start()
 
-            app=ChromeApp(ws.startPage,self._name,self.size,lockPort=lockPort)
+            app=ChromeApp(ws.startPage,self._name,self.size,lockPort=lockPort,chromeargs=args)
 
             def exit():
                 ws.exit()
@@ -800,7 +804,9 @@ class Guy:
     def runCef(self,log=False,autoreload=False,one=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         self._log=log
-        if log: logger.setLevel(logging.DEBUG)
+        if log: 
+            handler.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
         lockPort=None
         if one:
@@ -830,7 +836,9 @@ class Guy:
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
         self._log=log
-        if log: logger.setLevel(logging.DEBUG)
+        if log: 
+            handler.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
 
         ws=WebServer( self ,"0.0.0.0",port=port, autoreload=autoreload )
         ws.start()
