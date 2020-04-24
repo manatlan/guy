@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-__version__="0.6.0" #autoreload's version !
+__version__="0.6.0" #the one version
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -335,11 +335,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
-
+      
         instance = WebSocketHandler.clients.get(self,None)
         if instance is None:
             return
-        
+          
         o = jLoads(message)
         logger.debug("WS RECEPT: %s",o)
         method,args,uuid = o["command"],o.get("args"),o["uuid"]

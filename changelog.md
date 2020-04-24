@@ -1,4 +1,4 @@
-0.6 THE FUTURE
+0.6 (24/04/20)
     new logo: and rendered as default favicon.ico
     one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)
     app-mode: new ChromeApp, better interaction with chrome !!
@@ -9,6 +9,9 @@
     fix: logging server side
     the use of embed window (returning guy class) is now (really) deprecated (wants to simplify)
     app-mode: disable google translate
+
+0.5.7: (14/04/2020)
+    fix: dead socket on on_message
 
 0.5.6: (09/04/2020)
     fix: js log was always on. now: it depends if the log is activated or on server side too
