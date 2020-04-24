@@ -1,3 +1,15 @@
+0.6 (24/04/20)
+    new logo: and rendered as default favicon.ico
+    one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)
+    app-mode: new ChromeApp, better interaction with chrome !!
+    app-mode: when one mode on -> focus on current running (win+*nix)
+    cef-mode: when one mode on -> focus on current running (win only!!!) (broken on *nix)
+    app-mode: resize browser at start (no more js based)
+    app-mode: chrome process outputs to null
+    fix: logging server side
+    the use of embed window (returning guy class) is now (really) deprecated (wants to simplify)
+    app-mode: disable google translate
+
 0.5.7: (14/04/2020)
     fix: dead socket on on_message
 
