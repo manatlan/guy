@@ -436,7 +436,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/favicon.ico',               FavIconHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
-        ])
+        ], compress_response=True)
         self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
