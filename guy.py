@@ -201,7 +201,6 @@ class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
     async def get(self,cid):
-        print("which???",cid,"in",INST)
         o=INST.get( cid )
         if o:
             self.write(o._renderJs(cid))
@@ -341,18 +340,18 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         logger.debug("Connect %s",cid)
         o=INST.get( cid )
         if o:
-          o._connect( self ) # provok l'appel de l'init
-          WebSocketHandler.clients[self]=o
+            o=o.clone( self ) # !!!!!!!!!!!!!!!!!!!!!
+
+            WebSocketHandler.clients[self]=o
 
     def on_close(self):
         o=WebSocketHandler.clients[self]
         logger.debug("Disconnect %s",o._id)
         if o._id!=self.instance._id: # avoid to remove the main instance
-          del INST[o._id]
+            del INST[o._id]
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
-      
         instance = WebSocketHandler.clients.get(self,None)
         if instance is None:
             return
@@ -680,14 +679,6 @@ class CefApp:
         self.__instance.Shutdown()
 
 
-async def doInit( instance ):
-    instance._rebind() # WTF ?: need to call this
-    if hasattr(instance,"init"):
-        self_init = getattr(instance, "init")
-        if asyncio.iscoroutinefunction( self_init ):
-            await self_init(  )
-        else:
-            self_init(  )
 
 
 def chromeBringToFront(port):
@@ -772,10 +763,6 @@ class Guy:
         ## REBIND ################################################################
         ## REBIND ################################################################
         ## REBIND ################################################################
-
-    def _connect(self,wsock):
-        self._wsock = wsock # save the current socket for this instance !!!
-        asyncio.ensure_future( doInit(self) )
 
 
     def run(self,log=False,autoreload=False,one=False,args=[]):
@@ -1162,8 +1149,40 @@ var self= {
         function = self._getRoutage(method)
         return function(*args)
 
+
+
+    def clone(self,wsock):
+        logger.debug("CLONE %s",self._name)
+        keys=self._routes.keys()
+        self._routes={}
+        new = copy.copy(self)
+        for n, v in inspect.getmembers(new):
+            if n in keys:
+                if inspect.isfunction(v):
+                    new._routes[n]=types.MethodType( v, new ) #rebound !
+                    setattr(new,n,types.MethodType( v, new )) #rebound !
+                else:
+                    new._routes[n]=v
+
+        new._wsock = wsock
+
+        async def doInit( instance ):
+            instance._rebind() # WTF ?: need to call this
+            if hasattr(instance,"init"):
+                self_init = getattr(instance, "init")
+                if asyncio.iscoroutinefunction( self_init ):
+                    await self_init(  )
+                else:
+                    self_init(  )
+
+        asyncio.ensure_future( doInit(new) )
+
+        return new
+
+
     def _renderHtml(self,includeGuyJs=True):
-        cid="%s-%s" % (self._id,str(uuid.uuid4())[:8])  # client id
+        # cid="%s-%s" % (self._id,str(uuid.uuid4())[:8])  # client id
+        cid=self._id
 
         INST.set(cid,self) # When render -> save the instance in the pool (INST)
 
