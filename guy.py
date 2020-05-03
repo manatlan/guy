@@ -22,7 +22,14 @@
 # logger for each part
 # cookiejar
 
-__version__="0.6.0" #the one version
+
+"""
+changelog:
+remove deprecated returning "guy instance" (instanciateWindow)
+"""
+
+                                        # handling the instances is completly different (5/2/2020) between 0.4.3 & 0.5.0
+__version__="0.6.1" #try to repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce", which broke "progress"
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -85,10 +92,6 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=await method(web,*g.groups())
             else:
                 ret=method(web,*g.groups())
-            if isinstance(ret,Guy):
-                print("*** DEPRECATED ***, will be removed in near future")
-                ret.parent = web.instance
-                web.write( ret._renderHtml() )
             return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
@@ -1095,47 +1098,6 @@ var guy={
       },
     }),
     exit: function() {guy._call("exit",[])},
-
-    _instanciateWindow: async function(o) {
-        guy.log("Window "+o.name+":","Instanciate, routes=",o.routes);
-
-        self={
-            parent: self,
-            _promise: new Promise( function (resolve, reject) {
-                guy.on(o.event, function(r) {
-                    guy.log("Window "+o.name+":","Exited, return = ",r)
-                    self._div.parentNode.removeChild(self._div);
-                    self=self.parent;
-                    resolve( guy._jsonParse(r) )
-                })
-            }),
-            _div: (function(html){
-                var tag_div=document.createElement("div");
-                tag_div.innerHTML = html
-                document.body.appendChild(tag_div);
-                return tag_div;
-            })(o.html),
-            exit: function() {guy.emitMe(o.event, null)},
-            run: function() {
-                guy.log("Window "+o.name+":","Running")
-                return self._promise;
-            },
-        }
-
-        for(var key of o.routes) {
-            (function _(key,id) {
-                self[key]=function(_) {return guy._call(id+"."+key, Array.prototype.slice.call(arguments) )}
-            })(key,o.id);
-        }
-
-        var tag_js=document.createElement("script");
-        tag_js.setAttribute('type', 'text/javascript');
-        tag_js.innerHTML = o.scripts
-        self._div.appendChild(tag_js)
-
-        return self;
-    },
-
 };
 
 
@@ -1191,48 +1153,7 @@ var self= {
 
     def __call__(self,method,*args):
         function = self._getRoutage(method)
-
-        ret= function(*args)
-
-        if isinstance(ret,Guy):
-            print("*** DEPRECATED ***, will be removed in near future")
-            ################################################################
-            o=ret
-
-            routes=[k for k in o._routes.keys() if not k.startswith("_")]
-
-            eventExit="event-"+o._id+".exit"
-            def exit():
-                logger.debug("USE %s: EXIT (%s)",o._name,o._json)
-                try:
-                    asyncio.create_task(self.emitMe(eventExit,o._json)) #  py37
-                except:
-                    asyncio.ensure_future(self.emitMe(eventExit,o._json)) # py35
-                del INST[o._id]
-
-
-
-            html=o._renderHtml( includeGuyJs=False )
-            scripts=";".join(re.findall('(?si)<script>(.*?)</script>', html))
-
-            o.parent = self
-            o._callbackExit=exit
-            asyncio.ensure_future( doInit(o) )
-
-            obj=dict(
-                id=o._id,
-                name=o._name,
-                html=html,
-                routes=routes,
-                event=eventExit,
-                scripts=scripts,
-
-                script="guy._instanciateWindow(x.result)"
-            )
-            return obj
-            ################################################################
-
-        return ret
+        return function(*args)
 
     def _renderHtml(self,includeGuyJs=True):
         INST[self._id]=self # When render -> save the instance in the pool (INST)
