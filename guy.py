@@ -1129,10 +1129,14 @@ var self= {
         function = self._getRoutage(method)
         return function(*args)
 
-
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    #/\ lot of work here
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
     def clone(self):    #<- the name is not good ;-)
-        if self._realClone:
+        if self._realClone: # server mode
             logger.debug("CLONE %s",self._name)
             keys=self._routes.keys()
             self._routes={}
@@ -1146,7 +1150,7 @@ var self= {
                         new._routes[n]=v
 
             return new
-        else:
+        else: # not server mode
             for n, v in inspect.getmembers(self):
                 if not n.startswith("_") and inspect.isfunction(v):
                     logger.debug("::: REBIND method %s.%s()" % (self._name,n))
@@ -1159,12 +1163,22 @@ var self= {
         async def doInit( instance ):
             if hasattr(instance,"init"):
                 self_init = getattr(instance, "init")
+
                 if asyncio.iscoroutinefunction( self_init ):
-                    await self_init(  )
+                    if isinstance(self_init, types.FunctionType):
+                        await self_init( instance )
+                    else:
+                        await self_init( )
                 else:
-                    self_init(  )
+                    if isinstance(self_init, types.FunctionType):
+                        self_init( instance )
+                    else:
+                        self_init(  )
 
         asyncio.ensure_future( doInit(self) )
+
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 
     def _renderHtml(self,includeGuyJs=True):
