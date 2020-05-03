@@ -200,14 +200,30 @@ class JDict:
 class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
-    async def get(self,id):
-        o=INST.get( id )
+    async def get(self,cid):
+        print("which???",cid,"in",INST)
+        o=INST.get( cid )
         if o:
-            self.write(o._renderJs())
+            self.write(o._renderJs(cid))
         else:
             raise tornado.web.HTTPError(status_code=404)
 
-INST={}
+class INSTANCES(dict):
+    def __init__(self):
+        dict.__init__(self,{})
+    def get(self,cid):
+        # id=cid.split("-")[0]
+        id=cid
+        if id in self:
+            return self[id]
+        else:
+            return None
+    def set(self,cid,value):
+        # id=cid.split("-")[0]
+        id=cid
+        self[id]=value
+
+INST=INSTANCES()
 
 class FavIconHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
@@ -299,13 +315,13 @@ class ProxyHandler(tornado.web.RequestHandler):
             self.write(str(e))
 
 
-async def sockwrite(wsock, **kwargs ):
-    if wsock:
+async def sockwrite(theSock, **kwargs ):
+    if theSock:
         try:
-            await wsock.write_message(jDumps(kwargs))
+            await theSock.write_message(jDumps(kwargs))
         except Exception as e:
-            logger.error("Socket write : can't:%s",wsock)
-            if wsock in WebSocketHandler.clients: del WebSocketHandler.clients[wsock]
+            logger.error("Socket write : can't:%s",theSock)
+            if theSock in WebSocketHandler.clients: del WebSocketHandler.clients[theSock]
 
 
 async def emit(event,*args):
@@ -321,14 +337,12 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, instance):
         self.instance=instance
 
-    def open(self,id):
-        o=INST.get( id )
+    def open(self,cid):
+        logger.debug("Connect %s",cid)
+        o=INST.get( cid )
         if o:
-          logger.debug("Connect %s",id)
           o._connect( self ) # provok l'appel de l'init
           WebSocketHandler.clients[self]=o
-        else:
-          logger.debug("CAN't Connect %s",id)
 
     def on_close(self):
         o=WebSocketHandler.clients[self]
@@ -434,8 +448,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         self.app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<cid>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<cid>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/favicon.ico',               FavIconHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
@@ -728,7 +742,7 @@ class Guy:
         self.parent=None
         self._log=False
         self._name = self.__class__.__name__
-        self._id=self._name+"-"+hex(id(self))[2:]
+        self._id=self._name+"_"+hex(id(self))[2:]   # unique (readable) id to this instance
         self._callbackExit=None      #public callback when "exit"
         if hasattr(sys, "_MEIPASS"):  # when freezed with pyinstaller ;-)
             self._folder=sys._MEIPASS
@@ -915,18 +929,18 @@ class Guy:
         return Proxy()
 
 
-    def _renderJs(self,asChild=False):
+    def _renderJs(self,cid):
         if self.size and self.size is not FULLSCREEN:
             size=self.size
         else:
             size=None
         routes=[k for k,v in self._routes.items() if not v.__func__.__qualname__.startswith("Guy.")]
+
         logger.debug("ROUTES: %s",routes)
         js = """
 document.addEventListener("DOMContentLoaded", function(event) {
     %s
 },true)
-
 
 
 function setupWS( cbCnx ) {
@@ -1110,9 +1124,9 @@ var self= {
 
 """ % (
         'if(!document.title) document.title="%s";' % self._name,
-        self._id, # for the socket
+        cid, # for the socket
         "true" if self._log else "false",
-        "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, asChild and self._id+"."+k or k) for k in routes])
+        "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, k) for k in routes])
     )
 
         return js
@@ -1142,21 +1156,16 @@ var self= {
 
 
     def _getRoutage(self,method):
-        function=None
-        if "." in method:
-            id,method = method.split(".")
-            function=INST.get(id)._routes[method]
-        else:
-            logger.debug("METHOD SELF %s",method)
-            function=self._routes[method]
-        return function
+        return self._routes[method]
 
     def __call__(self,method,*args):
         function = self._getRoutage(method)
         return function(*args)
 
     def _renderHtml(self,includeGuyJs=True):
-        INST[self._id]=self # When render -> save the instance in the pool (INST)
+        cid="%s-%s" % (self._id,str(uuid.uuid4())[:8])  # client id
+
+        INST.set(cid,self) # When render -> save the instance in the pool (INST)
 
         path=self._folder
         html=self.__doc__
@@ -1174,29 +1183,29 @@ var self= {
                         x=x.replace(rep, jDumps( o ))
             return x
 
-        def repgjs(x,page):
-          return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%self._id,x)
+        def repgjs(x):
+            return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%(cid,),x)
 
         if hasattr(self,"render"):
             html = self.render( path )
-            html=repgjs(html,self._name)
+            html=repgjs(html)
             return rep(html)
         else:
             if hasattr(self,"_render"):
                 print("**DEPRECATING** use of _render() ... use render() instead !")
                 html = self._render( path )
-                html=repgjs(html,self._name)
+                html=repgjs(html)
                 return rep(html)
             else:
                 if html:
                     if includeGuyJs: html=("""<script src="guy.js"></script>""")+ html
-                    html=repgjs(html,self._name)
+                    html=repgjs(html)
                     return rep(html)
                 else:
                     f=os.path.join(path,FOLDERSTATIC,"%s.html" % self._name)
                     if os.path.isfile(f):
                         html=readTextFile(f)
-                        html=repgjs(html,self._name)
+                        html=repgjs(html)
                         return rep(html)
                     else:
                         return "ERROR: can't find '%s'" % f
