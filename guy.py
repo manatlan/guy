@@ -25,11 +25,13 @@
 
 """
 changelog:
-remove deprecated returning "guy instance" (instanciateWindow)
+- remove deprecated "returning guy instance" (instanciateWindow)
+- nice exit when cef is broken
+- repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" ("handling the instances is completly different" (5/2/2020) between 0.4.3 & 0.5.0)
 """
 
-                                        # handling the instances is completly different (5/2/2020) between 0.4.3 & 0.5.0
-__version__="0.6.1" #try to repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce", which broke "progress"
+                                 
+__version__="0.6.1" #the good 0.6
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -200,29 +202,16 @@ class JDict:
 class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
-    async def get(self,cid):
-        o=INST.get( cid )
+    async def get(self,id):
+        o=INST.get( id )
         if o:
-            self.write(o._renderJs(cid))
+            self.write(o._renderJs(id))
         else:
             raise tornado.web.HTTPError(status_code=404)
 
-class INSTANCES(dict):
-    def __init__(self):
-        dict.__init__(self,{})
-    def get(self,cid):
-        # id=cid.split("-")[0]
-        id=cid
-        if id in self:
-            return self[id]
-        else:
-            return None
-    def set(self,cid,value):
-        # id=cid.split("-")[0]
-        id=cid
-        self[id]=value
 
-INST=INSTANCES()
+
+INST={}
 
 class FavIconHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
@@ -336,24 +325,24 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, instance):
         self.instance=instance
 
-    def open(self,cid):
-        logger.debug("Connect %s",cid)
-        o=INST.get( cid )
+    def open(self,id):
+        logger.debug("Connect %s",id)
+        o=INST.get( id )
         if o:
-            o=o.clone( self ) # !!!!!!!!!!!!!!!!!!!!!
+            o=o.clone( ) # clone only in server mode
+            o.callInit(self)
 
             WebSocketHandler.clients[self]=o
 
     def on_close(self):
-        o=WebSocketHandler.clients[self]
-        logger.debug("Disconnect %s",o._id)
-        if o._id!=self.instance._id: # avoid to remove the main instance
-            del INST[o._id]
+        current=WebSocketHandler.clients[self]
+        logger.debug("Disconnect %s",current._id)
+        del current # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
-        instance = WebSocketHandler.clients.get(self,None)
-        if instance is None:
+        current = WebSocketHandler.clients.get(self,None)
+        if current is None:
             return
           
         o = jLoads(message)
@@ -389,19 +378,19 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                 logger.debug(">>> (%s) %s",mode,r)
                 await sockwrite(self,**r)
 
-            fct=instance._getRoutage(method)
+            fct=current._getRoutage(method)
 
             if asyncio.iscoroutinefunction( fct ):
 
                 async def function():
-                    return await instance(method,*args)
+                    return await current(method,*args)
 
                 #asyncio.create_task( execution( function, uuid, "ASYNC") )  #py37
                 asyncio.ensure_future ( execution( function, uuid, "ASYNC") ) #py35
 
             else:
                 async def function():
-                    return instance(method,*args)
+                    return current(method,*args)
 
                 await execution( function, uuid, "SYNC" )
 
@@ -447,8 +436,8 @@ class WebServer(Thread): # the webserver is ran on a separated thread
 
         self.app=tornado.web.Application([
             (r'/_/(?P<url>.+)',             ProxyHandler,dict(instance=self.instance)),
-            (r'/(?P<cid>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
-            (r'/(?P<cid>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-ws',          WebSocketHandler,dict(instance=self.instance)),
+            (r'/(?P<id>[^/]+)-js',          GuyJSHandler,dict(instance=self.instance)),
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/favicon.ico',               FavIconHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
@@ -731,6 +720,7 @@ class Guy:
     size=None
     def __init__(self):
         self.parent=None
+        self._realClone=False
         self._log=False
         self._name = self.__class__.__name__
         self._id=self._name+"_"+hex(id(self))[2:]   # unique (readable) id to this instance
@@ -750,20 +740,6 @@ class Guy:
         self._routes["cfg_get"]=self.cfg_get
         self._routes["cfg_set"]=self.cfg_set
         self._routes["exit"]=self.exit
-
-
-    def _rebind(self):
-        ## REBIND ################################################################
-        ## REBIND ################################################################
-        ## REBIND ################################################################ DOn't understand why I NEED to made this ?!
-        for n, v in inspect.getmembers(self):
-            if not n.startswith("_") and inspect.isfunction(v):
-                logger.debug("::: REBIND method %s.%s()" % (self._name,n))
-                setattr(self,n,types.MethodType( v, self )) #rebound !
-        ## REBIND ################################################################
-        ## REBIND ################################################################
-        ## REBIND ################################################################
-
 
     def run(self,log=False,autoreload=False,one=False,args=[]):
         """ Run the guy's app in a windowed env (one client)"""
@@ -823,15 +799,18 @@ class Guy:
         ws=WebServer( self, autoreload=autoreload )
         ws.start()
 
-        app=CefApp(ws.startPage,self.size,lockPort=lockPort)
-
-        tornado.autoreload.add_reload_hook(app.exit)
-
-        self._callbackExit = app.exit
         try:
-            app.wait() # block
-        except KeyboardInterrupt:
-            print("-Process stopped")
+            app=CefApp(ws.startPage,self.size,lockPort=lockPort)
+
+            tornado.autoreload.add_reload_hook(app.exit)
+
+            self._callbackExit = app.exit
+            try:
+                app.wait() # block
+            except KeyboardInterrupt:
+                print("-Process stopped")
+        except Exception as e:
+            print("Trouble with CEF:",e)
         ws.exit()
         ws.join()
         return self
@@ -839,6 +818,7 @@ class Guy:
 
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
+        self._realClone=True
         self._log=log
         if log: 
             handler.setLevel(logging.DEBUG)
@@ -916,7 +896,7 @@ class Guy:
         return Proxy()
 
 
-    def _renderJs(self,cid):
+    def _renderJs(self,id):
         if self.size and self.size is not FULLSCREEN:
             size=self.size
         else:
@@ -1111,7 +1091,7 @@ var self= {
 
 """ % (
         'if(!document.title) document.title="%s";' % self._name,
-        cid, # for the socket
+        id, # for the socket
         "true" if self._log else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, k) for k in routes])
     )
@@ -1151,40 +1131,41 @@ var self= {
 
 
 
-    def clone(self,wsock):
-        logger.debug("CLONE %s",self._name)
-        keys=self._routes.keys()
-        self._routes={}
-        new = copy.copy(self)
-        for n, v in inspect.getmembers(new):
-            if n in keys:
-                if inspect.isfunction(v):
-                    new._routes[n]=types.MethodType( v, new ) #rebound !
-                    setattr(new,n,types.MethodType( v, new )) #rebound !
-                else:
-                    new._routes[n]=v
+    def clone(self):
+        if self._realClone:
+            logger.debug("CLONE %s",self._name)
+            keys=self._routes.keys()
+            self._routes={}
+            new = copy.copy(self)
+            for n, v in inspect.getmembers(new):
+                if n in keys:
+                    if inspect.isfunction(v):
+                        new._routes[n]=types.MethodType( v, new ) #rebound !
+                        setattr(new,n,types.MethodType( v, new )) #rebound !
+                    else:
+                        new._routes[n]=v
 
-        new._wsock = wsock
+            return new
+        else:
+            return self
+
+    def callInit(self,wsock):
+        self._wsock = wsock # link sock to the class!
 
         async def doInit( instance ):
-            instance._rebind() # WTF ?: need to call this
             if hasattr(instance,"init"):
                 self_init = getattr(instance, "init")
                 if asyncio.iscoroutinefunction( self_init ):
-                    await self_init(  )
+                    await self_init( instance )
                 else:
-                    self_init(  )
+                    self_init( instance )
 
-        asyncio.ensure_future( doInit(new) )
-
-        return new
+        asyncio.ensure_future( doInit(self) )
 
 
     def _renderHtml(self,includeGuyJs=True):
-        # cid="%s-%s" % (self._id,str(uuid.uuid4())[:8])  # client id
         cid=self._id
-
-        INST.set(cid,self) # When render -> save the instance in the pool (INST)
+        INST[cid]=self # When render -> save the instance in the pool (INST)
 
         path=self._folder
         html=self.__doc__
