@@ -58,8 +58,6 @@ function set(v) {
 <h1>Search <<q>></h1>
 <button onclick="self.jcall()">jcall vs</button>
 <button onclick="guy.emit('hello','S')">Emit S</button>
-    <button onclick="self.testOpen()">testOpen</button>
-
     """
     size=(200,200)
 
@@ -77,15 +75,7 @@ function set(v) {
     async def jcall(self):
         await self.js.alert(self.v)
 
-    def testOpen(self):
-        return Simplest()
-      
-class Simplest(guy.Guy):
-    """
-    <h1>Hello</h1>
-    <button style="float:right;font-size:2em" onclick="self.exit()">X</button>
-    """
-    
+
 if __name__=="__main__":
     app=Index()
     app.serve(log=True)
