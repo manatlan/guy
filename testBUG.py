@@ -38,4 +38,4 @@ class Other(guy.Guy):    # name the class as the web/<class_name>.html
 
 if __name__=="__main__":
     d=BUG()
-    d.run(log=True)
+    d.serve(log=True)

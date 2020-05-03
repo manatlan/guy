@@ -1131,7 +1131,7 @@ var self= {
 
 
 
-    def clone(self):
+    def clone(self):    #<- the name is not good ;-)
         if self._realClone:
             logger.debug("CLONE %s",self._name)
             keys=self._routes.keys()
@@ -1147,6 +1147,10 @@ var self= {
 
             return new
         else:
+            for n, v in inspect.getmembers(self):
+                if not n.startswith("_") and inspect.isfunction(v):
+                    logger.debug("::: REBIND method %s.%s()" % (self._name,n))
+                    setattr(self,n,types.MethodType( v, self )) #rebound !
             return self
 
     def callInit(self,wsock):
@@ -1156,9 +1160,9 @@ var self= {
             if hasattr(instance,"init"):
                 self_init = getattr(instance, "init")
                 if asyncio.iscoroutinefunction( self_init ):
-                    await self_init( instance )
+                    await self_init(  )
                 else:
-                    self_init( instance )
+                    self_init(  )
 
         asyncio.ensure_future( doInit(self) )
 
