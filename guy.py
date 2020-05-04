@@ -326,9 +326,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.instance=instance
 
     def open(self,id):
-        logger.debug("Connect %s",id)
         o=INST.get( id )
         if o:
+            logger.debug("Connect %s",id)
             o=o.clone( ) # clone only in server mode
             o.callInit(self)
 
@@ -336,8 +336,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         current=WebSocketHandler.clients[self]
+        current._wsock=None
         logger.debug("Disconnect %s",current._id)
-        del current # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         del WebSocketHandler.clients[self]
 
     async def on_message(self, message):
@@ -1161,19 +1161,12 @@ var self= {
         self._wsock = wsock # link sock to the class!
 
         async def doInit( instance ):
-            if hasattr(instance,"init"):
-                self_init = getattr(instance, "init")
-
-                if asyncio.iscoroutinefunction( self_init ):
-                    if isinstance(self_init, types.FunctionType):
-                        await self_init( instance )
-                    else:
-                        await self_init( )
+            init=instance._getRoutage("init")
+            if init:
+                if asyncio.iscoroutinefunction( init ):
+                    await init( )
                 else:
-                    if isinstance(self_init, types.FunctionType):
-                        self_init( instance )
-                    else:
-                        self_init(  )
+                    init(  )
 
         asyncio.ensure_future( doInit(self) )
 
