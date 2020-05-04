@@ -733,7 +733,7 @@ class Guy:
         self._routes={}
         for n, v in inspect.getmembers(self, inspect.ismethod):
             if not v.__func__.__qualname__.startswith("Guy."):
-                if n not in ["init","__init__","render"]:
+                if n not in ["__init__","render"]:
                     self._routes[n]=v
 
         # guy's inner routes
