@@ -329,14 +329,21 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         o=INST.get( id )
         if o:
             logger.debug("Connect %s",id)
-            o=o.clone( ) # clone only in server mode
-            o.callInit(self)
+
+            async def doInit( instance ):
+                init=instance._getRoutage("init")
+                if init:
+                    if asyncio.iscoroutinefunction( init ):
+                        await instance(self,"init")
+                    else:
+                        instance(self,"init")
+
+            asyncio.ensure_future( doInit(o) )
 
             WebSocketHandler.clients[self]=o
 
     def on_close(self):
         current=WebSocketHandler.clients[self]
-        current._wsock=None
         logger.debug("Disconnect %s",current._id)
         del WebSocketHandler.clients[self]
 
@@ -383,14 +390,14 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             if asyncio.iscoroutinefunction( fct ):
 
                 async def function():
-                    return await current(method,*args)
+                    return await current(self,method,*args)
 
                 #asyncio.create_task( execution( function, uuid, "ASYNC") )  #py37
                 asyncio.ensure_future ( execution( function, uuid, "ASYNC") ) #py35
 
             else:
                 async def function():
-                    return current(method,*args)
+                    return current(self,method,*args)
 
                 await execution( function, uuid, "SYNC" )
 
@@ -720,7 +727,6 @@ class Guy:
     size=None
     def __init__(self):
         self.parent=None
-        self._realClone=False
         self._log=False
         self._name = self.__class__.__name__
         self._id=self._name+"_"+hex(id(self))[2:]   # unique (readable) id to this instance
@@ -740,6 +746,7 @@ class Guy:
         self._routes["cfg_get"]=self.cfg_get
         self._routes["cfg_set"]=self.cfg_set
         self._routes["exit"]=self.exit
+
 
     def run(self,log=False,autoreload=False,one=False,args=[]):
         """ Run the guy's app in a windowed env (one client)"""
@@ -818,7 +825,6 @@ class Guy:
 
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
-        self._realClone=True
         self._log=log
         if log: 
             handler.setLevel(logging.DEBUG)
@@ -1122,57 +1128,45 @@ var self= {
             await asyncio.sleep(0.01)
 
 
-    def _getRoutage(self,method):
-        return self._routes[method]
+    def _getRoutage(self,method): # or None
+        return self._routes.get(method)
 
-    def __call__(self,method,*args):
+    def __call__(self,theSock,method,*args):
+        ####################################################################
+        ## not the best (no concurrent client in servermode)
+        ####################################################################
+
+        self._wsock=theSock
+
+        for k, v in self._routes.items():
+            setattr(self,k,v) #rebound ! (for init())
+
         function = self._getRoutage(method)
         return function(*args)
 
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    #/\ lot of work here
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-    def clone(self):    #<- the name is not good ;-)
-        if self._realClone: # server mode
-            logger.debug("CLONE %s",self._name)
-            keys=self._routes.keys()
-            self._routes={}
-            new = copy.copy(self)
-            for n, v in inspect.getmembers(new):
-                if n in keys:
-                    if inspect.isfunction(v):
-                        new._routes[n]=types.MethodType( v, new ) #rebound !
-                        setattr(new,n,types.MethodType( v, new )) #rebound !
-                    else:
-                        new._routes[n]=v
+    # def __call__(self,theSock,method,*args):
+    #     ####################################################################
+    #     ## create a context, contextual to the socket "theSock" -> context
+    #     ####################################################################
+    #     context = copy.copy(self)
 
-            return new
-        else: # not server mode
-            for n, v in inspect.getmembers(self):
-                if not n.startswith("_") and inspect.isfunction(v):
-                    logger.debug("::: REBIND method %s.%s()" % (self._name,n))
-                    setattr(self,n,types.MethodType( v, self )) #rebound !
-            return self
+    #     for n, v in inspect.getmembers(context):
+    #         if n in self._routes.keys():
+    #             if inspect.isfunction(v):
+    #                 v=types.MethodType( v, context )
+    #                 setattr( context, n, v )
+    #             context._routes[n]=v
 
-    def callInit(self,wsock):
-        self._wsock = wsock # link sock to the class!
-
-        async def doInit( instance ):
-            init=instance._getRoutage("init")
-            if init:
-                if asyncio.iscoroutinefunction( init ):
-                    await init( )
-                else:
-                    init(  )
-
-        asyncio.ensure_future( doInit(self) )
-
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-
+    #     context._wsock=theSock
+    #     ####################################################################
+    #     try:
+    #         function = context._getRoutage(method)
+    #         r=function(*args)
+    #     finally:
+    #         self.__dict__.update( context.__dict__ )
+    #         del context
+    #     return r
 
     def _renderHtml(self,includeGuyJs=True):
         cid=self._id
@@ -1221,17 +1215,6 @@ var self= {
                     else:
                         return "ERROR: can't find '%s'" % f
 
-    @property
-    def _dict(self):
-        obj={k:v for k,v in self.__dict__.items() if not (k.startswith("_") or callable(v))}
-        for i in ["_callbackExit","__doc__","size","parent"]:
-            if i in obj: del obj[i]
-        return obj
-
-    @property
-    def _json(self):
-        """ return a json representation of the inner attributs of this"""
-        return jDumps(self._dict)
 
 
 def runAndroid(ga):

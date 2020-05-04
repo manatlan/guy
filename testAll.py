@@ -2,7 +2,7 @@
 import guy
 
 """
-here, i will try to test a max of features in one file ...
+here, i will try to test a max of features in one test/file ...
 (currently, it's the beginning)
 """
 
@@ -61,5 +61,5 @@ class App(guy.Guy):
     await self.init()
   
 if __name__ == "__main__": 
-    App().serve()
+    App().serve(log=True)
 
