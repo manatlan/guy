@@ -1,32 +1,27 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from guy import Guy
-from datetime import datetime
+import guy
 
-class Simple(Guy):
-    size=(200,400)
-    __doc__="""
-
-    <script>
-    function set() {
-        localStorage["hello"]=new Date();
-        init()
-    }
-
-    function init() {
-        document.body.innerHTML += (localStorage["hello"] || "Empty");
-    }
-
-    </script>
-
-    <button onclick="set()">set</button>
+class Prompt(guy.Guy):
     """
-    async def init(self):
-        await self.js.init()
+        <style>body {background:#EEE}</style>
 
-if __name__ == "__main__":
-    x=Simple()
-    # x.runCef(one=True)
-    x.run(one=True,log=False) # 11:21
-    # x.run() # 16:06:55
-    # x.serve()
+        <<title>> ?
+        <form onsubmit="self.post( this.txt.value ); return false">
+            <input name="txt" value="<<value>>"/>
+            <input type="submit" value="ok"/>
+        </form>    
+    """
+    size=(300,200)
+
+    def __init__(self,title,value=""):
+        self.title=title
+        self.value=value
+        super().__init__()
+
+    def post(self,value):
+        if value.strip():
+            self.exit(value.strip())
+
+if __name__=="__main__":
+    app=Prompt("name","yolo")
+    print(app.run())

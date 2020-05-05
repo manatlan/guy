@@ -7,23 +7,25 @@ def test_init(runner):
         <script>
         guy.init( async function() {
             await self.append("C")
-            guy.exit()
+            await self.end()
         })
         </script>
         """
         def __init__(self):
             Guy.__init__(self)
-            self.word="A"
+            self.word=["A"]
         def init(self):
             self.append("B")
             
         def append(self,letter):
-            self.word+=letter
-        def __del__(self):
-            self.word+="D"  # will be ignored (but perhaps in future ?!)
+            self.word.append(letter)
+        
+        def end(self):
+            self.exit(self.word)
     t=T()
-    r=runner(t)
-    assert r.word=="ABC"
+    ll=runner(t)
+    assert ll==list("ABC")
+
 
 def test_init_async(runner):
     class T(Guy):
@@ -31,21 +33,23 @@ def test_init_async(runner):
         <script>
         guy.init( async function() {
             await self.append("C")
-            guy.exit()
+            await self.end()
         })
         </script>
         """
         def __init__(self):
             Guy.__init__(self)
-            self.word="A"
+            self.word=["A"]
 
         async def init(self):
             self.append("B")
 
         def append(self,letter):
-            self.word+=letter
-        def __del__(self):
-            self.word+="D"  # will be ignored (but perhaps in future ?!)
+            self.word.append(letter)
+
+        def end(self):
+            self.exit(self.word)
+
     t=T()
-    r=runner(t)
-    assert r.word=="ABC"
+    ll=runner(t)
+    assert ll==list("ABC")
