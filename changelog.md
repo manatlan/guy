@@ -1,8 +1,10 @@
-
-    - FIX: best isolation context execution, in ws -> repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" ("handling the instances is completly different" (5/2/2020) between 0.4.3 & 0.5.0) (bugged in 0.5 & 0.6)
-    - EVOL (BROKE COMPATIBILITY): new way to return (.run() ,.runcef(),.serve()) with exit(x)
+0.7.0 (06/05/2020) : the REAL good one ;-)
+    - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
+    - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 
+           Now, it's a lot better !
     - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
     - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
+    - EVOL: response content is gzipped now (thanks @icarito)
     - pytests 100%ok
 
 0.6 (24/04/20)

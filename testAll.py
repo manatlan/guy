@@ -11,9 +11,12 @@ When concluant, will be integrated in pytests ;-)
 @guy.http(r"/item/(\d+)") 
 def getItem(web,number):
     web.write( "item %s"%number )
-  
 
-class App(guy.Guy):
+class MyMethods:
+    def testInheritedMethod(self):
+      return "ok"
+
+class App(guy.Guy,MyMethods):
     """
     <script>
     async function callOk(v) {
@@ -62,6 +65,11 @@ class App(guy.Guy):
 
     async function callTestJsReturn() {
       await self.testJsReturn()
+    }
+
+    async function callTestInheritedMethod() {
+      let t=await self.testInheritedMethod()
+      mark("Call an inherited method : "+t)
     }
 
     
@@ -123,6 +131,9 @@ class App(guy.Guy):
         # test testJsReturn
         await self.js.callTestJsReturn()
 
+        # test TestInheritedMethod
+        await self.js.callTestInheritedMethod()
+
         await self.js.finnish()
       
     def mulBy2(self,v):
@@ -137,5 +148,5 @@ if __name__ == "__main__":
     app=App()
     ll=app.run()
     print(">>>",ll)
-    assert ll==['py.init autocalled : ok', 'var substituion : ok', 'call a real js method : ok', 'callOk : ok ', 'callKo : ok', 'call unknown js : ok', 'Try a perso event: ok', 'Try a event to all: ok', 'js: guy.cfg set/get : ok', 'py: self.cfg set/get : ok', 'windows fetch/hook : ok', 'guy fetch/hook : ok', 'returning dict/script : ok']
+    assert ll==['py.init autocalled : ok', 'var substituion : ok', 'call a real js method : ok', 'callOk : ok ', 'callKo : ok', 'call unknown js : ok', 'Try a perso event: ok', 'Try a event to all: ok', 'js: guy.cfg set/get : ok', 'py: self.cfg set/get : ok', 'windows fetch/hook : ok', 'guy fetch/hook : ok', 'returning dict/script : ok', 'Call an inherited method : ok']
 

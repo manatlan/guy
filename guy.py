@@ -22,14 +22,8 @@
 # logger for each part
 # cookiejar
 
-
-"""
-TODO:
-- REVOIR les tests : testRedirect & NEW_SCOPE
-"""
-
-                                 
-__version__="0.6.1" #the good 0.6
+                              
+__version__="0.7.0" #the real good one
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -450,7 +444,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             (r'/(?P<page>[^\.]*)',          MainHandler,dict(instance=self.instance)),
             (r'/favicon.ico',               FavIconHandler,dict(instance=self.instance)),
             (r'/(.*)',                      tornado.web.StaticFileHandler, dict(path=statics ))
-        ])
+        ], compress_response=True)
         self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
