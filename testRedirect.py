@@ -18,7 +18,6 @@ class Marco(Guy,Glob):
       </script>
 
       <button onclick="aff( self.t1 )">t1</button>
-      <button onclick="aff( self.s1 )">s1</button>
       <button onclick="aff( self.test )">Test</button>
 
 
@@ -38,10 +37,6 @@ class Marco(Guy,Glob):
   def t1(self):
     return "t1"
 
-  cpt=0
-  def s1(self):
-    self.cpt+=1
-    return self.cpt
 
 #==========================================
 class Polo(Guy,Glob):
@@ -53,7 +48,6 @@ class Polo(Guy,Glob):
       </script>
 
       <button onclick="aff( self.t2 )">t2</button>
-      <button onclick="aff( self.s2 )">s2</button>
       <button onclick="aff( self.test )">Test</button>
 
       <a href="/">go to marco</a>
@@ -65,10 +59,6 @@ class Polo(Guy,Glob):
   def t2(self):
     return "t2"
 
-  cpt=0
-  def s2(self):
-    self.cpt+=1
-    return self.cpt
 
 if __name__ == "__main__":
     app=Marco()

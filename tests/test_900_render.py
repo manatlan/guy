@@ -21,10 +21,9 @@ def test_render(runner):
             """
 
         def end(self,txt):
-            self.ok=txt
-            self.exit()
+            self.exit(txt)
     
     t=T()
-    r=runner(t)
-    assert r.ok=="ok"
+    txt=runner(t)
+    assert txt=="ok"
 

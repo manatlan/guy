@@ -1,3 +1,12 @@
+0.7.0 (06/05/2020) : the REAL good one ;-)
+    - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
+    - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 
+           Now, it's a lot better !
+    - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
+    - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
+    - EVOL: response content is gzipped now (thanks @icarito)
+    - pytests 100%ok
+
 0.6 (24/04/20)
     new logo: and rendered as default favicon.ico
     one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)

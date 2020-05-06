@@ -32,8 +32,9 @@ def test_jscall(runner):
 
         </script>
         """
+        ll=[]
+        
         async def init(self):
-            self.ll=[]
             self.ll.append( await self.js.adds("A","B") )
 
         async def step1(self):
@@ -53,9 +54,8 @@ def test_jscall(runner):
         def stop(self,jll):
             assert jll==['A', 'B', 'C', 'D', 'E', 'F']
             assert self.ll==['AB', 'CD', 'EF', 'Unknown', 'Error']
-            self.ok=True
-            self.exit()
+            self.exit(True)
 
     t=W1()
-    r=runner(t)
-    assert r.ok
+    ok=runner(t)
+    assert ok

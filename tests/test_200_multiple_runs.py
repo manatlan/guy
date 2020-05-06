@@ -5,13 +5,11 @@ def test_doubleRun_sameInstance(runner):
     class T(Guy):
         __doc__="Hello"
         def init(self):
-            self.ok=True
-            self.exit()
+            self.exit(True)
 
     t=T()
-    r=runner(t)
-    assert r.ok
-    t.ok=False
-    r=runner(t)
-    assert r.ok
+    ok=runner(t)
+    assert ok
+    ok=runner(t)
+    assert ok
 

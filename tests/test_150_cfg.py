@@ -30,12 +30,13 @@ def test_cfg(runner):
             await self.js.stop()
 
         def stop(self,c):
-            self.ccfg=c
-            self.scfg=self.cfg.value
-            if self.cfg.unknown: self.scfg+=self.cfg.unknown
-            self.exit()
+            ccfg=c
+            scfg=self.cfg.value
+            if self.cfg.unknown: scfg+=self.cfg.unknown
+
+            self.exit(ccfg == scfg)
         
     t=T()
-    r=runner(t)
+    ok=runner(t)
     if t.cfg._file and os.path.isfile(t.cfg._file): os.unlink(t.cfg._file)
-    assert r.ccfg == r.scfg == "(__init__)(init)(client)"
+    assert ok
