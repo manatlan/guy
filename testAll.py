@@ -1,9 +1,11 @@
 #!/usr/bin/python3 -u
-import guy
+import guy,asyncio
 
 """
 here, i will try to test a max of features in one test/file ...
 (currently, it's the beginning)
+
+When concluant, will be integrated in pytests ;-)
 """
 
 @guy.http(r"/item/(\d+)") 
@@ -38,22 +40,16 @@ class App(guy.Guy):
       mark("js: guy.cfg set/get : ok")
     }
 
-    function testFetch() {
-      window.fetch("/item/42")
-        .then( x=>{return x.text()})
-        .then( x=>{ 
-          if(x=="item 42")
-            mark("windows fetch/hook : ok")
-        })
+    async function testFetch() {
+      let q=await window.fetch("/item/42")
+      let x=await q.text()
+      if(x=="item 42") mark("windows fetch/hook : ok")
     }
 
-    function testGFetch() {
-      guy.fetch("/item/42")
-        .then( x=>{return x.text()})
-        .then( x=>{ 
-          if(x=="item 42")
-            mark("guy fetch/hook : ok")
-        })
+    async function testGFetch() {
+      let q=await guy.fetch("/item/42")
+      let x=await q.text()
+      if(x=="item 42") mark("guy fetch/hook : ok")
     }
 
     function testSubVar() {
@@ -62,6 +58,10 @@ class App(guy.Guy):
     
     async function finnish() {
       self.exit( MARKS )
+    }
+
+    async function callTestJsReturn() {
+      await self.testJsReturn()
     }
 
     
@@ -115,20 +115,27 @@ class App(guy.Guy):
         self.cfg.cptServer = v+1
         await self.emit("evtMark","py: self.cfg set/get : ok")
         
-        # test the http hook with js/window.fetch
-        await self.js.testFetch()
-        
-        # test the http hook with js/guy.fetch (the proxy)
-        await self.js.testGFetch()
+        # test the http hook with js/window.fetch & js/guy.fetch (the proxy)
+        w1=self.js.testFetch()
+        w2=self.js.testGFetch()
+        await asyncio.gather(w1,w2)
+
+        # test testJsReturn
+        await self.js.callTestJsReturn()
 
         await self.js.finnish()
       
     def mulBy2(self,v):
         return v*2
+
+    async def testJsReturn(self):
+        return dict( script="mark('returning dict/script : ok')" ) #it's evil!
+
         
         
 if __name__ == "__main__": 
     app=App()
-    ll=app.run(log=True)
-    assert ll==['py.init autocalled : ok', 'var substituion : ok', 'call a real js method : ok', 'callOk : ok ', 'callKo : ok', 'call unknown js : ok', 'Try a perso event: ok', 'Try a event to all: ok', 'js: guy.cfg set/get : ok', 'py: self.cfg set/get : ok', 'windows fetch/hook : ok', 'guy fetch/hook : ok']
+    ll=app.run()
+    print(">>>",ll)
+    assert ll==['py.init autocalled : ok', 'var substituion : ok', 'call a real js method : ok', 'callOk : ok ', 'callKo : ok', 'call unknown js : ok', 'Try a perso event: ok', 'Try a event to all: ok', 'js: guy.cfg set/get : ok', 'py: self.cfg set/get : ok', 'windows fetch/hook : ok', 'guy fetch/hook : ok', 'returning dict/script : ok']
 

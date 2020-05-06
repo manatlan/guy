@@ -16,12 +16,12 @@ def test_hook_with_classic_fetch(runner):
         </script>
         """
         async def init(self):
-            self.retour =await self.js.testHook()
-            self.exit()
+            retour =await self.js.testHook()
+            self.exit(retour)
 
     t=T()
-    r=runner(t)
-    assert r.retour == "item 42"
+    retour=runner(t)
+    assert retour == "item 42"
 
 
 
@@ -36,10 +36,10 @@ def test_hook_with_guy_fetch(runner):
         </script>
         """
         async def init(self):
-            self.retour =await self.js.testHook()
-            self.exit()
+            retour =await self.js.testHook()
+            self.exit(retour)
 
     t=T()
-    r=runner(t)
-    assert r.retour == "item 42"
+    retour=runner(t)
+    assert retour == "item 42"
 

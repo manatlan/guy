@@ -11,9 +11,8 @@ def test_useStatic(runner):
             Guy.__init__(self)
 
         def verif(self,a,b):
-            self.somme = a+b
-            self.exit()
+            self.exit(a+b)
 
     t=UseStatic(42)
-    r=runner(t)
-    assert r.somme == 87
+    total=runner(t)
+    assert total == 87

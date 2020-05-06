@@ -1,3 +1,10 @@
+
+    - FIX: best isolation context execution, in ws -> repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" ("handling the instances is completly different" (5/2/2020) between 0.4.3 & 0.5.0) (bugged in 0.5 & 0.6)
+    - EVOL (BROKE COMPATIBILITY): new way to return (.run() ,.runcef(),.serve()) with exit(x)
+    - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
+    - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
+    - pytests 100%ok
+
 0.6 (24/04/20)
     new logo: and rendered as default favicon.ico
     one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)

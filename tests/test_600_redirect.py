@@ -19,8 +19,7 @@ def test_redirect(runner):
         def step1(self):
             return True
         def step3(self):
-            self.ok=True
-            self.exit()
+            self.exit(True)
 
     class W2(Guy):
         __doc__="""
@@ -39,8 +38,8 @@ def test_redirect(runner):
             return True
 
     t=W1()
-    r=runner(t)
-    assert r.ok
+    ok=runner(t)
+    assert ok
 
 def test_redirect_exit(runner): # same concept as test_600_redirect.py ... but with better url
 
@@ -64,12 +63,12 @@ def test_redirect_exit(runner): # same concept as test_600_redirect.py ... but w
         2
         """
         def end(self):
-            self.parent.retour ="ok"
-            self.exit()
+            assert self.parent
+            self.exit(True)
 
 
     t=W1()
 
-    r=runner(t) # the returned instance is the main (t)
-    assert r.retour == "ok"
+    ok=runner(t) # it's W2 which exit
+    assert ok
 

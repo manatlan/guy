@@ -10,6 +10,8 @@ class T(Guy):
             case "set":
                 localStorage["var"]=42;
                 return true
+            default:
+                alert("mode='"+mode+"' ?!?")
         }
     
     }
@@ -18,32 +20,32 @@ class T(Guy):
 
     def __init__(self,mode):
         self.mode=mode
-        Guy.__init__(self)
+        super().__init__()
 
     async def init(self):
-        self.ok =await self.js.storage(self.mode)
-        self.exit()
+        ok =await self.js.storage(self.mode)
+        self.exit(ok)
 
 def test_no_lockPort(runner):
     t=T("get")
-    r=runner(t)
-    assert r.ok==False
+    ok=runner(t)
+    assert not ok,"localStorage is already present ?!"
 
     t=T("set")
-    r=runner(t)
-    assert r.ok==True
+    ok=runner(t)
+    assert ok,"setting localstorage not possible ?!"
 
     t=T("get")
-    r=runner(t)
-    assert r.ok==False
+    ok=runner(t)
+    assert not ok,"win has memory ;-("
 
-# CAN't work AS IS
+# CAN't WORK IN pytest, as is
 
 # def test_lockPort(): # app mode only (broken with cef ... coz ioloop/pytests)
 #     t=T("set")
-#     r=t.runCef(one=True)
-#     assert r.ok==True
+#     ok=t.runCef(one=True)
+#     assert ok==True
 
 #     t=T("get")
-#     r=t.runCef(one=True)
-#     assert r.ok==True                 # localStorage is persistent !
+#     ok=t.runCef(one=True)
+#     assert ok==True                 # localStorage is persistent !

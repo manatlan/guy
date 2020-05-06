@@ -24,15 +24,8 @@
 
 
 """
-changelog:
-- remove deprecated "returning guy instance" (instanciateWindow)
-- nice quit when cef is broken
-- great context execution, thru ws -> repair commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" ("handling the instances is completly different" (5/2/2020) between 0.4.3 & 0.5.0)
-- new way to return (.run() ,.runcef(),.serve()) with exit(x)
-
 TODO:
-- REVOIR les tests : testTordu, testRedirect & NEW_SCOPE
-- CORRIGE les pytests
+- REVOIR les tests : testRedirect & NEW_SCOPE
 """
 
                                  
@@ -99,7 +92,11 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=await method(web,*g.groups())
             else:
                 ret=method(web,*g.groups())
-            return True
+                
+            if isinstance(ret,Guy):
+                ret.parent = web.instance
+                web.write( ret._renderHtml() )
+            return True                
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
 def wsquery(wsurl,msg): # Synchrone call, with tornado
@@ -1109,7 +1106,7 @@ class Guy(GuyBase):
         self._routes={}
         for n, v in inspect.getmembers(self, inspect.ismethod):
             if not v.__func__.__qualname__.startswith("GuyBase."):  # only "Guy." and its subclass
-                if not n.startswith("_"):
+                if not n.startswith("_") and n!="render" :
                     #~ print("------------Route %s: %s" %(self._id,n))
                     self._routes[n]=v
 

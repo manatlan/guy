@@ -17,6 +17,7 @@ body {background: #EEE}
 }
 </style>
 
+
 <button onclick="run(this,'p1',0.1)">Go</button>
 <div class="pb" id="p1"><div></div></div>
 
@@ -24,17 +25,23 @@ body {background: #EEE}
 <div class="pb" id="p2"><div></div></div>
 
 <script>
-    function run(b,pb,speed) {
+    async function run(b,pb,speed) {
         b.disabled=true;
-        self.doTheJob(pb,speed).then( m=>{
-            b.disabled=false;
-            console.log(m);
-        })
+        let m=await self.doTheJob(pb,speed)
+        b.disabled=false;
+        console.log(m);
     }
     guy.on("percent", function( pb,percent ) {
         document.querySelector("#"+pb+" div").style.width=percent+"%";
     })
 </script>
+
+
+<span style="color:yellow;background:red;padding:4;border:2px solid yellow;position:fixed;top:20px;right:20px;transform: rotate(10deg);">
+Run in a second tab, to see<br/>
+that it's isolated by instance !
+</span>
+
     """
     async def doTheJob(self,pb,speed):
         for i in range(101):

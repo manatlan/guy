@@ -29,8 +29,7 @@ def test_emits(runner):
             await self.emitMe("hello","E")         # emit ME only
             await self.emitMe("end")               # emit ME only and finnish the test
         def endtest(self,word):
-            self.word=word
-            self.exit()
+            self.exit(word)
     t=T()
-    r=runner(t)
-    assert r.word=="ABCDE"
+    word=runner(t)
+    assert word=="ABCDE"
