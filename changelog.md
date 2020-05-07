@@ -1,35 +1,40 @@
 0.7.0 (06/05/2020) : the REAL good one ;-)
-    - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
-    - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 
-           Now, it's a lot better !
-    - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
-    - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
-    - EVOL: response content is gzipped now (thanks @icarito)
-    - pytests 100%ok
+
+ - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
+ - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 
+        Now, it's a lot better !
+ - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
+ - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
+ - EVOL: response content is gzipped now (thanks @icarito)
+ - pytests 100%ok
 
 0.6 (24/04/20)
-    new logo: and rendered as default favicon.ico
-    one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count on cache/chrome ! (removed at end)
-    app-mode: new ChromeApp, better interaction with chrome !!
-    app-mode: when one mode on -> focus on current running (win+*nix)
-    cef-mode: when one mode on -> focus on current running (win only!!!) (broken on *nix)
-    app-mode: resize browser at start (no more js based)
-    app-mode: chrome process outputs to null
-    fix: logging server side
-    the use of embed window (returning guy class) is now (really) deprecated (wants to simplify)
-    app-mode: disable google translate
+
+ - new logo: and rendered as default favicon.ico
+ - one mode available in app & cef mode : let run one instance only with chrome cache (stored belongs the guy's app). Else the app can't count - on cache/chrome ! (removed at end)
+ - app-mode: new ChromeApp, better interaction with chrome !!
+ - app-mode: when one mode on -> focus on current running (win+*nix)
+ - cef-mode: when one mode on -> focus on current running (win only!!!) (broken on *nix)
+ - app-mode: resize browser at start (no more js based)
+ - app-mode: chrome process outputs to null
+ - fix: logging server side
+ - the use of embed window (returning guy class) is now (really) deprecated (wants to simplify)
+ - app-mode: disable google translate
 
 0.5.7: (14/04/2020)
+
     fix: dead socket on on_message
 
 0.5.6: (09/04/2020)
+
     fix: js log was always on. now: it depends if the log is activated or on server side too
 
 0.5.5: (26/03/2020)
-0.5.4: (26/03/2020)
+
  - FIX: on win, when freezed, cant be considered as module
  
 0.5.4: (21/03/2020)
+
  - FIX: ability to read html files with encoding utf8 or cp1252
  - EVOL: expose config file path (py side) : self.cfg._file
  - EVOL: tornado application is available as "app" attribut on guy instance (for specials customizations), thanks @dferens !
