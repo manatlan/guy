@@ -1,5 +1,6 @@
 0.7.1 (IN PROGRESS)
     - remove INST replaced by Guy._instances
+    
 
 0.7.0 (06/05/2020) : the REAL good one ;-)
     - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
