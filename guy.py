@@ -199,15 +199,12 @@ class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
     async def get(self,id):
-        o=INST.get( id )
+        o=Guy._instances.get( id )
         if o:
             self.write(o._renderJs(id))
         else:
             raise tornado.web.HTTPError(status_code=404)
 
-
-
-INST={}
 
 class FavIconHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
@@ -322,7 +319,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.instance=instance
 
     def open(self,id):
-        o=INST.get( id )
+        o=Guy._instances.get( id )
         if o:
             logger.debug("Connect %s",id)
 
@@ -1037,7 +1034,7 @@ var self= {
 
     def _renderHtml(self,includeGuyJs=True):
         cid=self._id
-        INST[cid]=self # When render -> save the instance in the pool (INST)
+        Guy._instances[cid]=self # When render -> save the instance in the pool 
 
         path=self._folder
         html=self.__doc__
@@ -1084,6 +1081,7 @@ var self= {
 
 class Guy(GuyBase):
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
+    _instances={}   # class variable handling all rendered instances
 
     size=None
     def __init__(self):
