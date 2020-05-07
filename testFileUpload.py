@@ -27,8 +27,7 @@ class FileUpload(guy.Guy):
     }
 
     function drop(e) {
-        if(e.dataTransfer.files)
-            upload(e.dataTransfer.files[0])
+        if(e.dataTransfer.files) upload(e.dataTransfer.files[0])
         e.preventDefault();
     }
     
@@ -38,8 +37,11 @@ class FileUpload(guy.Guy):
         reader.readAsBinaryString(file);
         reader.onload = async function (evt) {
             await self.upload( file.name, evt.target.result )
-            document.body.innerHTML+=`<li>${file.name}</li>`;
         }
+    }
+
+    function add(txt) {
+        document.body.innerHTML+=`<li>${txt}</li>`;        
     }
     
     </script>
@@ -48,7 +50,7 @@ class FileUpload(guy.Guy):
 
     
     async def upload(self, name,content):
-        print("* %s : %s " %(name,[content[:20]+"..."]))
+        await self.js.add(name+" (%s)"%len(content))
 
 if __name__=="__main__":
     FileUpload().run()
