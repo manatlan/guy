@@ -1,3 +1,6 @@
+0.7.1 (IN PROGRESS)
+    - remove INST replaced by Guy._instances
+
 0.7.0 (06/05/2020) : the REAL good one ;-)
     - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
     - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 

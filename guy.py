@@ -23,7 +23,7 @@
 # cookiejar
 
                               
-__version__="0.7.0" #the real good one
+__version__="0.7.1" #the real good one
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
