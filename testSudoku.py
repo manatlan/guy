@@ -40,17 +40,11 @@ class Sudoku(Guy):
         float: left;
     }
 
-    div#grid > input:nth-child(9n+4) {
-        border-left:2px solid black;
-    }
-    div#grid > input:nth-child(9n+7) {
+    div#grid > input:nth-child(9n+4), div#grid > input:nth-child(9n+7) {
         border-left:2px solid black;
     }
 
-    div#grid > input:nth-child(19),div#grid > input:nth-child(20),div#grid > input:nth-child(21),div#grid > input:nth-child(22),div#grid > input:nth-child(23),div#grid > input:nth-child(24),div#grid > input:nth-child(25),div#grid > input:nth-child(26),div#grid > input:nth-child(27) {
-        border-bottom:2px solid black;
-    }
-    div#grid > input:nth-child(46),div#grid > input:nth-child(47),div#grid > input:nth-child(48),div#grid > input:nth-child(49),div#grid > input:nth-child(50),div#grid > input:nth-child(51),div#grid > input:nth-child(52),div#grid > input:nth-child(53),div#grid > input:nth-child(54) {
+    div#grid > input:nth-child(19),div#grid > input:nth-child(20),div#grid > input:nth-child(21),div#grid > input:nth-child(22),div#grid > input:nth-child(23),div#grid > input:nth-child(24),div#grid > input:nth-child(25),div#grid > input:nth-child(26),div#grid > input:nth-child(27),div#grid > input:nth-child(46),div#grid > input:nth-child(47),div#grid > input:nth-child(48),div#grid > input:nth-child(49),div#grid > input:nth-child(50),div#grid > input:nth-child(51),div#grid > input:nth-child(52),div#grid > input:nth-child(53),div#grid > input:nth-child(54) {
         border-bottom:2px solid black;
     }
 
