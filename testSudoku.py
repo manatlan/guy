@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 from guy import Guy
 import random
 
@@ -111,9 +111,10 @@ class Sudoku(Guy):
         await self.js.grid(g)
 
     def resolv(self,g):
-        g2=resolv(g)
-        print("RESOLV: %s -> %s" % (g,g2))
-        return g2
+        gr=resolv(g)
+        print("RESOLV: %s" % g)
+        print("----->: %s" % gr)
+        return gr
 
     def random(self):
         ll=list("123456789")
@@ -122,7 +123,7 @@ class Sudoku(Guy):
         random.shuffle(ll)
 
         ll=list(resolv("".join(ll)))
-        for i in range(150):
+        for i in range(100):
             ll[ random.randint(0,80) ]="."
         g="".join(ll)
         print("RANDOM: %s" % g)
