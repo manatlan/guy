@@ -68,19 +68,21 @@ class Sudoku(Guy):
 
     <script>
     function grid(g) {
-        let d = document.querySelector("#grid")
-        d.innerHTML=""
-        for(var i=1;i<=9*9;i++) {
-            let c=g[i-1];
-            let h=document.createElement("input")
-            h.id=`c${i}` ;
-            h.maxlength="1";
-            h.value=c=="."?"":c
-            if(c==".")
-                h.onclick=function() {this.select()}
-            else
-                h.readOnly= true
-            d.appendChild( h )
+        if(g) {
+            let d = document.querySelector("#grid")
+            d.innerHTML=""
+            for(var i=1;i<=9*9;i++) {
+                let c=g[i-1];
+                let h=document.createElement("input")
+                h.id=`c${i}` ;
+                h.maxlength="1";
+                h.value=c=="."?"":c
+                if(c==".")
+                    h.onclick=function() {this.select()}
+                else
+                    h.readOnly= true
+                d.appendChild( h )
+            }
         }
     }
 
@@ -97,7 +99,7 @@ class Sudoku(Guy):
         for(var i=1;i<=9*9;i++) {
             let c=document.querySelector(`#c${i}`).value.trim()
             if(c=="") c="."
-            g+=("123456789".indexOf(c)>=0?c:".");
+            g+=("123456789".indexOf(c)>=0?c[0]:".");
         }
         grid( await self.resolv(g) )
     }
