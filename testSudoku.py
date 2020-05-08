@@ -20,10 +20,10 @@ def resolv(x):
 class Sudoku(Guy):
     """
     <style>
-    body {margin:0px}
+    body {margin:0px;text-align:center;background:buttonface}
 
     div#grid {
-       margin:2px;
+       margin:8px;
        border:2px solid black;
        display:inline-block;
     }
