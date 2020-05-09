@@ -69,23 +69,22 @@ class Sudoku(Guy):
 
     <script>
     function setGrid(g) {
-        if(g) {
-            let d = document.querySelector("#grid")
-            d.innerHTML=""
-            for(var i=1;i<=9*9;i++) {
-                let c=g[i-1];
-                let h=document.createElement("input")
-                h.id=`c${i}` ;
-                if(c==".") {
-                    h.onclick=function() {this.select()}
-                    h.onchange=function() {doValid()}
-                }
-                else {
-                    h.value=c
-                    h.readOnly= true
-                }
-                d.appendChild( h )
+        document.body.className="";
+        let d = document.querySelector("#grid")
+        d.innerHTML=""
+        for(var i=1;i<=9*9;i++) {
+            let c=g[i-1];
+            let h=document.createElement("input")
+            h.id=`c${i}` ;
+            if(c==".") {
+                h.onclick=function() {this.select()}
+                h.onchange=function() {doValid()}
             }
+            else {
+                h.value=c
+                h.readOnly= true
+            }
+            d.appendChild( h )
         }
     }
 
@@ -111,8 +110,20 @@ class Sudoku(Guy):
         setGrid( await self.random() )
     }
 
+    var undo=null;
     async function doResolv() {
-        setGrid( await self.resolv( getGrid() ) )
+        if(undo==null) {
+            let current = getGrid()
+            let r=await self.resolv( current )
+            if(r) {
+                undo = current;
+                setGrid( r )
+            }
+        }
+        else {
+            setGrid(undo);
+            undo=null;
+        }
     }
 
     </script>
