@@ -121,9 +121,8 @@ class Sudoku(Guy):
                 undo = current;
             }
         }
-        else {
+        else
             setGrid(undo);
-        }
     }
 
     </script>
