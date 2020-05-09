@@ -1034,7 +1034,6 @@ var self= {
 
     def _renderHtml(self,includeGuyJs=True):
         cid=self._id
-        Guy._instances[cid]=self # When render -> save the instance in the pool 
 
         path=self._folder
         html=self.__doc__
@@ -1101,6 +1100,9 @@ class Guy(GuyBase):
                 if not n.startswith("_") and n!="render" :
                     #~ print("------------Route %s: %s" %(self._id,n))
                     self._routes[n]=v
+
+        Guy._instances[self._id]=self # When render -> save the instance in the pool 
+
 
     @property
     def cfg(self):
