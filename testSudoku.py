@@ -86,6 +86,7 @@ class Sudoku(Guy):
             }
             d.appendChild( h )
         }
+        undo = null;
     }
 
     function getGrid() {
@@ -98,7 +99,6 @@ class Sudoku(Guy):
     }
 
     function doClear() {
-        undo=null
         setGrid(".................................................................................")
     }
 
@@ -108,7 +108,6 @@ class Sudoku(Guy):
     }
 
     async function doRandom() {
-        undo=null
         setGrid( await self.random() )
     }
 
@@ -118,13 +117,12 @@ class Sudoku(Guy):
             let current = getGrid()
             let r=await self.resolv( current )
             if(r) {
-                undo = current;
                 setGrid( r )
+                undo = current;
             }
         }
         else {
             setGrid(undo);
-            undo=null;
         }
     }
 
