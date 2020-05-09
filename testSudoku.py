@@ -16,7 +16,6 @@ def resolv(x):
         if ng: return ng
 #####################################################
 
-
 class Sudoku(Guy):
     """
     <style>
@@ -27,6 +26,14 @@ class Sudoku(Guy):
        border:2px solid black;
        display:inline-block;
     }
+    body.bad input {
+        color:red;
+    }
+    body.bad button#r {
+        pointer-events:none;
+        color:#FFF;
+    }
+
     div#grid > input:read-only {
         color:#AAA;
     }
@@ -58,10 +65,10 @@ class Sudoku(Guy):
 
     <button onclick="doClear()">Clear</button>
     <button onclick="doRandom()">Random</button>
-    <button onclick="doResolv()">Resolv</button>
+    <button id="r" onclick="doResolv()">Resolv</button>
 
     <script>
-    function grid(g) {
+    function setGrid(g) {
         if(g) {
             let d = document.querySelector("#grid")
             d.innerHTML=""
@@ -69,31 +76,43 @@ class Sudoku(Guy):
                 let c=g[i-1];
                 let h=document.createElement("input")
                 h.id=`c${i}` ;
-                h.value=c=="."?"":c
-                if(c==".")
+                if(c==".") {
                     h.onclick=function() {this.select()}
-                else
+                    h.onchange=function() {doValid()}
+                }
+                else {
+                    h.value=c
                     h.readOnly= true
+                }
                 d.appendChild( h )
             }
         }
     }
 
-    async function doClear() {
-        grid(".................................................................................")
-    }
-
-    async function doRandom() {
-        grid( await self.random() )
-    }
-
-    async function doResolv() {
+    function getGrid() {
         var g="";
         for(var i=1;i<=9*9;i++) {
             let c=document.querySelector(`#c${i}`).value.trim()
             g+=(c && "123456789".indexOf(c)>=0?c[0]:".");
         }
-        grid( await self.resolv(g) )
+        return g
+    }
+
+    function doClear() {
+        setGrid(".................................................................................")
+    }
+
+    async function doValid() {
+        let err=await self.checkValid( getGrid() )
+        document.body.className=err?"bad":"";
+    }
+
+    async function doRandom() {
+        setGrid( await self.random() )
+    }
+
+    async function doResolv() {
+        setGrid( await self.resolv( getGrid() ) )
     }
 
     </script>
@@ -101,8 +120,7 @@ class Sudoku(Guy):
     size=(400,410)
 
     async def init(self):
-        g = self.random()
-        await self.js.grid(g)
+        await self.js.setGrid( self.random() )
 
     def resolv(self,g):
         gr=resolv(g)
@@ -111,18 +129,20 @@ class Sudoku(Guy):
         return gr
 
     def random(self):
-        ll=list("123456789")
-        random.shuffle(ll)
-        ll=list(ll[0]+"."*80)
+        ll=80*["."] + [ str(random.randint(1,9)) ]
         random.shuffle(ll)
 
         ll=list(resolv("".join(ll)))
         for i in range(100):
             ll[ random.randint(0,80) ]="."
-        g="".join(ll)
-        print("RANDOM: %s" % g)
-        return g
-
+        return "".join(ll)
+    
+    def checkValid(self,g):
+        check9=lambda g: all([g.count(c)==1 for c in g.replace(".","")])
+        for i in range(0,9):
+            if not check9( g[i::9] ): return "Vertical trouble column %s"%i
+            if not check9( g[i*9:i*9+9] ): return "Horiz trouble row %s"%i
+            if not check9( carre(g,(i*3)%9,(i//3)*3) ): return "Trouble in %s square"%i
 
 if __name__=="__main__":
     app=Sudoku()
