@@ -62,7 +62,7 @@ class Tag:
     def add(self,o):
         self.contents.append(o)
     def __repr__(self):
-        attrs=['%s="%s"'%(k,html.escape( render(v) )) for k,v in self.attrs.items()]
+        attrs=['%s="%s"'%(k if k!="klass" else "class",html.escape( render(v) )) for k,v in self.attrs.items()]
         return """<%(tag)s %(attrs)s>%(content)s</%(tag)s>""" % dict(
             tag=self.tag,
             attrs=" ".join(attrs),
@@ -93,11 +93,27 @@ class Box(Tag):
 class Div(Tag):  pass
 class HBox(Tag): pass
 class VBox(Tag): pass
+class Tabs(Tag):
+    klass="tabs is-centered"
+    def __init__(self,**attrs):
+        super().__init__(*attrs)
+        self.ul=Ul()
+        self.contents.append( self.ul )
+    def addTab(self,selected,title,onclick=None):
+        if selected:
+            self.ul.add( Li(Link(title,onclick=onclick), klass="is-active" ) )
+        else:
+            self.ul.add( Li(Link(title,onclick=onclick)) )
+
 class Text(Tag):
     tag="p"
 class Button(Tag):
     tag="button"
-    klass="button is-light"
+    klass="button is-light "
+class Ul(Tag):
+    tag="ul"
+class Li(Tag):
+    tag="li"
 
 
 class GuyCompo(guy.Guy):
@@ -257,6 +273,8 @@ class JustGuy(GuyCompo):
         self.data.text="hello1"
         self.data.text2="hello2"
         self.data.v=12
+        self.data.tabSelected=1
+        self.data.message=None
         super().__init__()
 
     def build(self):
@@ -293,10 +311,17 @@ class JustGuy(GuyCompo):
             for i in range(self.data.v):
                 h.add( Text("T%s"%(i+1)) )
             v.add( Box(h) )
+        #=== tab
+        t=MyTabs( self.dataBind.tabSelected ,["bonjour","bonsoir","hello"])
+        v.add( t )
+        v.add( Box( Text("content %s" % t.data.selected) ))
+        #===
+        if self.data.message:
+            v.add( ModalMessage(self.dataBind.message) )
         return v
 
     def clickme(self,n):
-        print("click",n)
+        self.data.message="b%s clicked"%n
         self.data.text+="!"
         return self.update() #update manually !
 
@@ -308,8 +333,50 @@ class JustGuy(GuyCompo):
         else:
             self.data.selected={}
 
+
+class MyTabs(GuyCompo):
+    def __init__(self,selected:int,tabs:list):
+        self.data.selected=selected
+        self.data.tabs=tabs
+        super().__init__()
+
+    def build(self):
+        o = Tabs()
+        for idx,t in enumerate(self.data.tabs):
+            o.addTab( idx+1==self.data.selected, t, onclick=self.bind.select(idx+1) ) 
+        return o
+
+    def select(self,idx):
+        self.data.selected=idx
+
+class ModalMessage(GuyCompo):
+    def __init__(self,content):
+        self.data.content=content
+        super().__init__()
+
+    def build(self):
+        if self.data.content:
+            o = Div(klass="modal is-active")
+            o.add( Div(klass="modal-background",onclick=self.bind.close()) )
+            o.add( Div( Box(self.data.content),klass="modal-content") )
+            return o
+
+    def close(self):
+        self.data.content=None
+
+
 if __name__=="__main__":
+    # d=dict(a=2)
+    # dd=DictReactiveProp(d)
+    # dd["b"]=1
+    # dd["a"]+=2
+    # assert d=={'a': 4, 'b': 1}
+    # print( render( dd["a"]) )
+    # print( render( 4 ) )
+
     app=JustGuy()
+    # app=MyTabs()
+    # app=ModalMessage("Hello World")
     # app=Inc(0)
     # app=Multi(dict(name=12))
     app.run()
