@@ -42,25 +42,26 @@ class DictReactiveProp:
             yield k,ReactiveProp(self,k)
 
 
+def render(c: any) -> str: 
+    if isinstance(c,GuyCompo):
+        return c.render(False)
+    elif isinstance(c,ReactiveProp):
+        return str(c.get())
+    else:
+        return str(c)            
+
+
 class Tag:
     tag="div" # default one
+    klass=None
     def __init__(self,*contents,**attrs):
         self.tag=self.__class__.tag
         self.contents=list(contents)
         self.attrs=attrs
-        self.attrs["class"]=self.__class__.__name__
+        self.attrs["class"]=self.klass if self.klass else self.__class__.__name__.lower()
     def add(self,o):
         self.contents.append(o)
     def __repr__(self):
-
-        def render(c: any) -> str: 
-            if isinstance(c,GuyCompo):
-                return c.render(False)
-            elif isinstance(c,ReactiveProp):
-                return str(c.get())
-            else:
-                return str(c)            
-
         attrs=['%s="%s"'%(k,html.escape( render(v) )) for k,v in self.attrs.items()]
         return """<%(tag)s %(attrs)s>%(content)s</%(tag)s>""" % dict(
             tag=self.tag,
@@ -70,12 +71,14 @@ class Tag:
     def render(self,full=False):
         if full:
             return """<script src="guy.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
+
 <style>
-html,body {width:100%%;height:100%%;}
-body {margin:0px;background:buttonface;font-family: sans-serif;}
-div.HBox {display: flex;flex-flow: row nowrap;}
-div.VBox {display: flex;flex-flow: column nowrap;}
-div.HBox > *,div.VBox > * {flex: 1 1 50%%;}
+div.hbox {display: flex;flex-flow: row nowrap;align-items:center }
+div.vbox {display: flex;flex-flow: column nowrap;}
+div.hbox > *,div.vbox > * {flex: 1 1 50%%;margin:1px}
 </style> <body>%s</body>""" % self
         else:
             return str(self)
@@ -85,13 +88,16 @@ class Input(Tag):
     tag="input"
 class Link(Tag): 
     tag="a"
+class Box(Tag): 
+    klass="box"
 class Div(Tag):  pass
 class HBox(Tag): pass
 class VBox(Tag): pass
 class Text(Tag):
-    tag="span"
+    tag="p"
 class Button(Tag):
     tag="button"
+    klass="button is-light"
 
 
 class GuyCompo(guy.Guy):
@@ -115,14 +121,14 @@ class GuyCompo(guy.Guy):
         return DataBinder()
 
     @property
-    def dataBind(self):
+    def dataBind(self): # retrun a ReactiveProp
         class Binder:
             def __getattr__(sself,attribut):
                 assert attribut in self._data.keys(),"Unknown attribut '%s'"%attribut
                 o=self._data[attribut]
                 if isinstance(o,dict):
                     return DictReactiveProp(o)
-                elif isinstance(o,DictReactiveProp):
+                elif isinstance(o,DictReactiveProp) or isinstance(o,ReactiveProp):
                     return o
                 else:
                     return ReactiveProp(self,attribut)
@@ -139,12 +145,20 @@ class GuyCompo(guy.Guy):
         else:
             # call the method
             self._caller(getattr(zelf,method),args)
-            # and update all the content
-            return self.update()
+            
+            return self.update() # and update all the content
+            ########################################################################
+            ## Currently, it's update all (so two ways binding works ootb)
+            ## But in the future, the solution below is better 
+            ## but should introduce a way to update everywhere where there
+            ## are associate bindings !
+            ## (replace the "return self.update()" ^^, with bellow)
+            ########################################################################
             # print("bindUpdate:"+id)
             # return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (	
             #     id, self._caller( zelf.build ).render(False)	
             # ))	
+            ########################################################################
 
 
     def update(self):
@@ -171,7 +185,7 @@ class GuyCompo(guy.Guy):
                 assert method in self._routes.keys(),"Unknown method '%s'"%method
                 def _(*args):
                     if args:
-                        return "self.bindUpdate('%s','%s',%s)" % (self._id,method,",".join([str(i) for i in args]) )
+                        return "self.bindUpdate('%s','%s',%s)" % (self._id,method,",".join([render(i) for i in args]) ) #TODO: escaping here ! (and the render/str ?) json here !
                     else:
                         return "self.bindUpdate('%s','%s')" % (self._id,method)
                 return _
@@ -214,7 +228,7 @@ class Multi(GuyCompo):
         super().__init__()
 
     def build(self):
-        d=VBox(style="margin:10px")
+        d=VBox(style="padding:10px")
         for k,v in self.dataBind.dico.items():
             d.add( HBox( Text(k), Inc(v) ) )
         return d
@@ -234,13 +248,14 @@ class MyInput(GuyCompo):
 
 
 
-class JustPy(GuyCompo):
+class JustGuy(GuyCompo):
     """ great version """
-    size=(400,200)
+    size=(500,400)
 
     def __init__(self):
         self.data.selected={}
-        self.data.text="hello"
+        self.data.text="hello1"
+        self.data.text2="hello2"
         self.data.v=12
         super().__init__()
 
@@ -255,19 +270,29 @@ class JustPy(GuyCompo):
                 Text(self.data.text)
             ),
             HBox(
+                Text("surname:"),
+                # MyInput(self.data.text),
+                MyInput(self.dataBind.text2),                #<-- bind data
+                Text(self.data.text2)
+            ),
+            HBox(
                 Text("t1"),
                 Button('b1',onclick="self.clickme('1')"),   #<-- classic guy call
                 Button('b2',onclick='self.clickme("2")'),   #<-- classic guy call
             ),
             HBox(
                 Text("Count animals",style="color:red"),
-                Button('In your house',onclick=self.bind.setHouse()),                         #<- bind GuyCompo event
-                Button('In the zoo',onclick=self.bind.setZoo()),                              #<- bind GuyCompo event
+                Button('No!',onclick=self.bind.setMulti()),                         #<- bind GuyCompo event
+                Button('In your house',onclick=self.bind.setMulti(1)),                         #<- bind GuyCompo event
+                Button('In the zoo',onclick=self.bind.setMulti(2)),                              #<- bind GuyCompo event
             ),
             Multi(self.data.selected)                   #<-- bind data
         )
-        for i in range(self.data.v):
-            v.add( Text("T%s"%(i+1)) )
+        if self.data.v>0:
+            h=HBox()
+            for i in range(self.data.v):
+                h.add( Text("T%s"%(i+1)) )
+            v.add( Box(h) )
         return v
 
     def clickme(self,n):
@@ -275,13 +300,16 @@ class JustPy(GuyCompo):
         self.data.text+="!"
         return self.update() #update manually !
 
-    def setHouse(self):
-        self.data.selected=AHOUSE
-    def setZoo(self):
-        self.data.selected=AZOO
+    def setMulti(self,n=None):
+        if n==1:
+            self.data.selected=AHOUSE
+        elif n==2:
+            self.data.selected=AZOO
+        else:
+            self.data.selected={}
 
 if __name__=="__main__":
-    app=JustPy()
+    app=JustGuy()
     # app=Inc(0)
     # app=Multi(dict(name=12))
     app.run()
