@@ -48,11 +48,11 @@ class Tag:
         self.contents.append(o)
     def __repr__(self):
 
-        def render(c):
+        def render(c: any) -> str: 
             if isinstance(c,GuyCompo):
                 return c.render(False)
-            # if isinstance(c,GetterSetter): #TODO: not needed ... check that ?!
-            #     return c.get()
+            elif isinstance(c,GetterSetter): #TODO: not needed ... check that ?!
+                return str(c.get())
             else:
                 return str(c)            
 
@@ -135,9 +135,16 @@ class GuyCompo(guy.Guy):
             # call the method
             self._caller(getattr(zelf,method),args)
             # and update all the content
-            return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
-                id, self._caller( zelf.build ).render(False)
-            ))
+            return self.update()
+            # return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
+            #     id, self._caller( zelf.build ).render(False)
+            # ))
+
+    def update(self):
+        return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
+            self._id, self.build().render(False)
+        ))
+
 
 
     def _caller(self,method:str,args=[]):
@@ -227,8 +234,9 @@ class JustPy(GuyCompo):
         super().__init__()
 
     def build(self):
-        return VBox(
+        v= VBox(
             Inc(self.dataBind.v),
+            Text(self.dataBind.v),
             HBox(
                 Text("name:"),
                 # MyInput(self.data.text),
@@ -246,10 +254,14 @@ class JustPy(GuyCompo):
             ),
             Multi(self.dataBind.selected)                   #<-- bind data
         )
+        for i in range(self.data.v):
+            v.add( Text("T%s"%(i+1)) )
+        return v
 
     def clickme(self,n):
         print("click",n)
         self.data.text+="!"
+        return self.update()
 
     def setHouse(self):
         self.data.selected=AHOUSE
