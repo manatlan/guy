@@ -8,12 +8,17 @@ At the beginning, it was just a test to try to reproduce with "Guy", things like
 - https://www.reddit.com/r/Python/comments/gfq5ik/i_wrote_a_new_ui_framework_inspired_by_flutter/
 - flutter
 
-But things going better and better ... without magical things
-Helped by the vuejs ideas: it seems good in py side !
+But things going better and better ... without too magical things
+Helped by the vuejs concepts: it's now a lot more than a toy
 And so : it could clearly the future of "Guy Components" ;-)
+(which could be a "VuePy" server side)
 """
 
-class GetterSetter:
+####################################################################################
+## here are the base (surclass guy)
+####################################################################################
+
+class ReactiveProp:
     def __init__(self,instance,attribut):
         self.instance=instance
         self.attribut=attribut
@@ -23,18 +28,18 @@ class GetterSetter:
         return self.instance._data[self.attribut]
 
 
-class DictGetterSetter:
+class DictReactiveProp:
     def __init__(self,d):
         self._data=d
     def __setitem__(self,k,v):
-        g=GetterSetter(self,k)
+        g=ReactiveProp(self,k)
         g.set(v)
     def __getitem__(self,k):
-        g=GetterSetter(self,k)
+        g=ReactiveProp(self,k)
         return g.get()
     def items(self):
         for k in self._data.keys():
-            yield k,GetterSetter(self,k)
+            yield k,ReactiveProp(self,k)
 
 
 class Tag:
@@ -51,7 +56,7 @@ class Tag:
         def render(c: any) -> str: 
             if isinstance(c,GuyCompo):
                 return c.render(False)
-            elif isinstance(c,GetterSetter): #TODO: not needed ... check that ?!
+            elif isinstance(c,ReactiveProp):
                 return str(c.get())
             else:
                 return str(c)            
@@ -97,13 +102,13 @@ class GuyCompo(guy.Guy):
         class DataBinder:
             def __setattr__(zelf,k,v):
                 o=self._data.get(k)
-                if o and isinstance(o,GetterSetter):
+                if o and isinstance(o,ReactiveProp):
                     o.set(v)
                 else:
                     self._data[k]=v
             def __getattr__(zelf,k):
                 o=self._data[k]
-                if isinstance(o,GetterSetter):
+                if isinstance(o,ReactiveProp):
                     return o.get()
                 else:
                     return o
@@ -116,11 +121,11 @@ class GuyCompo(guy.Guy):
                 assert attribut in self._data.keys(),"Unknown attribut '%s'"%attribut
                 o=self._data[attribut]
                 if isinstance(o,dict):
-                    return DictGetterSetter(o)
-                elif isinstance(o,DictGetterSetter):
+                    return DictReactiveProp(o)
+                elif isinstance(o,DictReactiveProp):
                     return o
                 else:
-                    return GetterSetter(self,attribut)
+                    return ReactiveProp(self,attribut)
         return Binder()
 
 
@@ -136,9 +141,14 @@ class GuyCompo(guy.Guy):
             self._caller(getattr(zelf,method),args)
             # and update all the content
             return self.update()
+            # print("bindUpdate:"+id)
+            # return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (	
+            #     id, self._caller( zelf.build ).render(False)	
+            # ))	
 
 
     def update(self):
+        print("update:"+self._id)
         return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
             self._id, self.build().render(False)
         ))
@@ -171,8 +181,13 @@ class GuyCompo(guy.Guy):
         d=Div(id=self._id)
         d.add( self._caller( self.build ) )
         return d.render(path)
-####################################################################################
 
+
+####################################################################################
+## here come the tests
+####################################################################################
+AHOUSE=dict(cat=3,dog=2,)
+AZOO=dict(lion=4,zebra=9,elephant=3,tiger=7,)
 
 class Inc(GuyCompo):
 
@@ -194,7 +209,7 @@ class Inc(GuyCompo):
 
 class Multi(GuyCompo):
 
-    def __init__(self,dico):
+    def __init__(self,dico: dict):
         self.data.dico=dico
         super().__init__()
 
@@ -218,8 +233,6 @@ class MyInput(GuyCompo):
         self.data.v=txt
 
 
-AHOUSE=dict(cat=3,dog=2,)
-AZOO=dict(lion=4,zebra=9,elephant=3,tiger=7,)
 
 class JustPy(GuyCompo):
     """ great version """
@@ -260,7 +273,7 @@ class JustPy(GuyCompo):
     def clickme(self,n):
         print("click",n)
         self.data.text+="!"
-        return self.update()
+        return self.update() #update manually !
 
     def setHouse(self):
         self.data.selected=AHOUSE
