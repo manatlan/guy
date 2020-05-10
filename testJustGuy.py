@@ -86,7 +86,7 @@ div.hbox > *,div.vbox > * {flex: 1 1 50%%;margin:1px}
 
 class Input(Tag): 
     tag="input"
-class Link(Tag): 
+class A(Tag): 
     tag="a"
 class Box(Tag): 
     klass="box"
@@ -112,9 +112,9 @@ class Tabs(Tag):
         self.contents.append( self.ul )
     def addTab(self,selected,title,onclick=None):
         if selected:
-            self.ul.add( Li(Link(title,onclick=onclick), klass="is-active" ) )
+            self.ul.add( Li(A(title,onclick=onclick), klass="is-active" ) )
         else:
-            self.ul.add( Li(Link(title,onclick=onclick)) )
+            self.ul.add( Li(A(title,onclick=onclick)) )
 
 class Text(Tag):
     tag="p"
@@ -274,6 +274,39 @@ class MyInput(GuyCompo):
         self.data.v=txt
 
 
+class MyTabs(GuyCompo):
+
+    def __init__(self,selected:int,tabs:list):
+        self.data.selected=selected
+        self.data.tabs=tabs
+        super().__init__()
+
+    def build(self):
+        o = Tabs()
+        for idx,t in enumerate(self.data.tabs):
+            o.addTab( idx+1==self.data.selected, t, onclick=self.bind.select(idx+1) ) 
+        return o
+
+    def select(self,idx):
+        self.data.selected=idx
+
+
+class ModalMessage(GuyCompo):
+    def __init__(self,content):
+        self.data.content=content
+        super().__init__()
+
+    def build(self):
+        if self.data.content:
+            o = Div(klass="modal is-active")
+            o.add( Div(klass="modal-background",onclick=self.bind.close()) )
+            o.add( Div( Box(self.data.content),klass="modal-content") )
+            o.add( Div(klass="modal-close is-large",aria_label="close",onclick=self.bind.close()) )
+            return o
+
+    def close(self):
+        self.data.content=None
+
 
 class JustGuy(GuyCompo):
     """ great version """
@@ -332,7 +365,6 @@ class JustGuy(GuyCompo):
         return v
 
     def clickme(self,n):
-        self.data.message="b%s clicked"%n
         self.data.text+="!"
         return self.update() #update manually !
 
@@ -343,38 +375,8 @@ class JustGuy(GuyCompo):
             self.data.selected=AZOO
         else:
             self.data.selected={}
+            self.data.message="no more animals ;-)"
 
-
-class MyTabs(GuyCompo):
-    def __init__(self,selected:int,tabs:list):
-        self.data.selected=selected
-        self.data.tabs=tabs
-        super().__init__()
-
-    def build(self):
-        o = Tabs()
-        for idx,t in enumerate(self.data.tabs):
-            o.addTab( idx+1==self.data.selected, t, onclick=self.bind.select(idx+1) ) 
-        return o
-
-    def select(self,idx):
-        self.data.selected=idx
-
-class ModalMessage(GuyCompo):
-    def __init__(self,content):
-        self.data.content=content
-        super().__init__()
-
-    def build(self):
-        if self.data.content:
-            o = Div(klass="modal is-active")
-            o.add( Div(klass="modal-background",onclick=self.bind.close()) )
-            o.add( Div( Box(self.data.content),klass="modal-content") )
-            o.add( Div(klass="modal-close is-large",aria_label="close",onclick=self.bind.close()) )
-            return o
-
-    def close(self):
-        self.data.content=None
 
 
 if __name__=="__main__":
