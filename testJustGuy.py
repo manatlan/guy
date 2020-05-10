@@ -91,7 +91,18 @@ class Link(Tag):
 class Box(Tag): 
     klass="box"
 class Div(Tag):  pass
+
 class HBox(Tag): pass
+# class HBox(Tag):
+#     tag="div"
+#     klass="columns is-mobile"
+#     def __init__(self,*contents,**attrs):
+#         super().__init__(**attrs)
+#         self.contents=[Div(i,klass="column") for i in list(contents)]
+#     def add(self,o):
+#         self.contents.append( Div(o,klass="column"))
+
+
 class VBox(Tag): pass
 class Tabs(Tag):
     klass="tabs is-centered"
@@ -359,6 +370,7 @@ class ModalMessage(GuyCompo):
             o = Div(klass="modal is-active")
             o.add( Div(klass="modal-background",onclick=self.bind.close()) )
             o.add( Div( Box(self.data.content),klass="modal-content") )
+            o.add( Div(klass="modal-close is-large",aria_label="close",onclick=self.bind.close()) )
             return o
 
     def close(self):
