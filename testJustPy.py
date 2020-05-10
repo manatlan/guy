@@ -1,6 +1,18 @@
 #!/usr/bin/python3 -u
 import guy,os,html
 
+""" A lot Inspired by Vue syntax ! 
+
+At the beginning, it was just a test to try to reproduce with "Guy", things like :
+- justpy
+- https://www.reddit.com/r/Python/comments/gfq5ik/i_wrote_a_new_ui_framework_inspired_by_flutter/
+- flutter
+
+But things going better and better ... without magical things
+Helped by the vuejs ideas: it seems good in py side !
+And so : it could clearly the future of "Guy Components" ;-)
+"""
+
 class GetterSetter:
     def __init__(self,instance,attribut):
         self.instance=instance
@@ -9,6 +21,21 @@ class GetterSetter:
         self.instance._data[self.attribut]=v
     def get(self):
         return self.instance._data[self.attribut]
+
+
+class DictGetterSetter:
+    def __init__(self,d):
+        self._data=d
+    def __setitem__(self,k,v):
+        g=GetterSetter(self,k)
+        g.set(v)
+    def __getitem__(self,k):
+        g=GetterSetter(self,k)
+        return g.get()
+    def items(self):
+        for k in self._data.keys():
+            yield k,GetterSetter(self,k)
+
 
 class Tag:
     tag="div" # default one
@@ -62,7 +89,6 @@ class Button(Tag):
     tag="button"
 
 
-####################################################################################
 class GuyCompo(guy.Guy):
     
     @property
@@ -82,6 +108,21 @@ class GuyCompo(guy.Guy):
                 else:
                     return o
         return DataBinder()
+
+    @property
+    def dataBind(self):
+        class Binder:
+            def __getattr__(sself,attribut):
+                assert attribut in self._data.keys(),"Unknown attribut '%s'"%attribut
+                o=self._data[attribut]
+                if isinstance(o,dict):
+                    return DictGetterSetter(o)
+                elif isinstance(o,DictGetterSetter):
+                    return o
+                else:
+                    return GetterSetter(self,attribut)
+        return Binder()
+
 
     def bindUpdate(self,id:str,method:str,*args):
         # try to find the instance 'id'
@@ -121,20 +162,11 @@ class GuyCompo(guy.Guy):
                 return _
         return Binder()
 
-    @property
-    def dataBind(self):
-        class Binder:
-            def __getattr__(sself,attribut):
-                assert attribut in self._data.keys(),"Unknown attribut '%s'"%attribut
-                return GetterSetter(self,attribut)
-        return Binder()
-
-
-
     def render(self,path): # path is FAKED (by true/false) #TODO
         d=Div(id=self._id)
         d.add( self._caller( self.build ) )
         return d.render(path)
+####################################################################################
 
 
 class Inc(GuyCompo):
@@ -163,7 +195,7 @@ class Multi(GuyCompo):
 
     def build(self):
         d=VBox(style="margin:10px")
-        for k,v in self.data.dico.items():
+        for k,v in self.dataBind.dico.items():
             d.add( HBox( Text(k), Inc(v) ) )
         return d
 
