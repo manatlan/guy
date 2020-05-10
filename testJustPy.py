@@ -1,6 +1,15 @@
 #!/usr/bin/python3 -u
 import guy,os,html
 
+class GetterSetter:
+    def __init__(self,instance,attribut):
+        self.instance=instance
+        self.attribut=attribut
+    def set(self,v):
+        self.instance._data[self.attribut]=v
+    def get(self):
+        return self.instance._data[self.attribut]
+
 class Tag:
     tag="div" # default one
     def __init__(self,*contents,**attrs):
@@ -11,11 +20,20 @@ class Tag:
     def add(self,o):
         self.contents.append(o)
     def __repr__(self):
-        attrs=['%s="%s"'%(k,html.escape(v)) for k,v in self.attrs.items()]
+
+        def render(c):
+            if isinstance(c,GuyCompo):
+                return c.render(False)
+            # if isinstance(c,GetterSetter): #TODO: not needed ... check that ?!
+            #     return c.get()
+            else:
+                return str(c)            
+
+        attrs=['%s="%s"'%(k,html.escape( render(v) )) for k,v in self.attrs.items()]
         return """<%(tag)s %(attrs)s>%(content)s</%(tag)s>""" % dict(
             tag=self.tag,
             attrs=" ".join(attrs),
-            content=" ".join([i.render(False) if isinstance(i,GuyWidget) else str(i) for i in self.contents]),
+            content=" ".join([render(i) for i in self.contents]),
         )
     def render(self,full=False):
         if full:
@@ -31,6 +49,8 @@ div.HBox > *,div.VBox > * {flex: 1 1 50%%;}
             return str(self)
 
 
+class Input(Tag): 
+    tag="input"
 class Link(Tag): 
     tag="a"
 class Div(Tag):  pass
@@ -43,7 +63,26 @@ class Button(Tag):
 
 
 ####################################################################################
-class GuyWidget(guy.Guy):
+class GuyCompo(guy.Guy):
+    
+    @property
+    def data(self): # MUTABLE !
+        if not hasattr(self,"_data"): self._data={}
+        class DataBinder:
+            def __setattr__(zelf,k,v):
+                o=self._data.get(k)
+                if o and isinstance(o,GetterSetter):
+                    o.set(v)
+                else:
+                    self._data[k]=v
+            def __getattr__(zelf,k):
+                o=self._data[k]
+                if isinstance(o,GetterSetter):
+                    return o.get()
+                else:
+                    return o
+        return DataBinder()
+
     def bindUpdate(self,id:str,method:str,*args):
         # try to find the instance 'id'
         zelf=guy.Guy._instances.get(id)
@@ -82,6 +121,15 @@ class GuyWidget(guy.Guy):
                 return _
         return Binder()
 
+    @property
+    def dataBind(self):
+        class Binder:
+            def __getattr__(sself,attribut):
+                assert attribut in self._data.keys(),"Unknown attribut '%s'"%attribut
+                return GetterSetter(self,attribut)
+        return Binder()
+
+
 
     def render(self,path): # path is FAKED (by true/false) #TODO
         d=Div(id=self._id)
@@ -89,45 +137,71 @@ class GuyWidget(guy.Guy):
         return d.render(path)
 
 
-class Inc(GuyWidget):
+class Inc(GuyCompo):
 
     def __init__(self,v):
-        self.data=dict(v=v) # MUTABLE !!!
+        self.data.v=v 
         super().__init__()
     
     def build(self):
         return HBox(
-            Button("-1",onclick=self.bind.add(-1) ),         #<- bind guywidget event
-            Text(self.data["v"],style="text-align:center"),
-            Button("+1",onclick=self.bind.add(1) ),          #<- bind guywidget event
+            Button("-1",onclick=self.bind.add(-1) ),         #<- bind GuyCompo event
+            Text(self.data.v,style="text-align:center"),
+            Button("+1",onclick=self.bind.add(1) ),          #<- bind GuyCompo event
         )
 
     def add(self,v):
-        self.data["v"]+=v
+        self.data.v+=v
 
 
-class Multi(GuyWidget):
+
+class Multi(GuyCompo):
 
     def __init__(self,dico):
-        self.dico=dico
+        self.data.dico=dico
         super().__init__()
 
     def build(self):
         d=VBox(style="margin:10px")
-        for k,v in self.dico.items():
+        for k,v in self.data.dico.items():
             d.add( HBox( Text(k), Inc(v) ) )
         return d
-        
+
+
+class MyInput(GuyCompo):
+
+    def __init__(self,txt):
+        self.data.v=txt
+        super().__init__()
+
+    def build(self):
+        return Input(type="text",value=self.data.v,onchange=self.bind.onchange("this.value"))
+
+    def onchange(self,txt):
+        self.data.v=txt
+
+
 AHOUSE=dict(cat=3,dog=2,)
 AZOO=dict(lion=4,zebra=9,elephant=3,tiger=7,)
 
-class JustPy(GuyWidget):
+class JustPy(GuyCompo):
     """ great version """
     size=(400,200)
-    data=dict(selected={}) # ! MUTABLE !!!
+
+    def __init__(self):
+        self.data.selected={}
+        self.data.text="hello"
+        self.data.v=12
+        super().__init__()
 
     def build(self):
         return VBox(
+            Inc(self.dataBind.v),
+            HBox(
+                Text("name:"),
+                # MyInput(self.data.text),
+                MyInput(self.dataBind.text),                #<-- bind data
+            ),
             HBox(
                 Text("t1"),
                 Button('b1',onclick="self.clickme('1')"),   #<-- classic guy call
@@ -135,22 +209,23 @@ class JustPy(GuyWidget):
             ),
             HBox(
                 Text("Count animals",style="color:red"),
-                Button('In your house',onclick=self.bind.setHouse()),                         #<- bind guywidget event
-                Button('In the zoo',onclick=self.bind.setZoo()), #<- bind guywidget event
+                Button('In your house',onclick=self.bind.setHouse()),                         #<- bind GuyCompo event
+                Button('In the zoo',onclick=self.bind.setZoo()),                              #<- bind GuyCompo event
             ),
-            Multi(self.data["selected"])
+            Multi(self.dataBind.selected)                   #<-- bind data
         )
 
     def clickme(self,n):
         print("click",n)
+        self.data.text+="!"
 
     def setHouse(self):
-        self.data["selected"]=AHOUSE
+        self.data.selected=AHOUSE
     def setZoo(self):
-        self.data["selected"]=AZOO
+        self.data.selected=AZOO
 
 if __name__=="__main__":
     app=JustPy()
     # app=Inc(0)
-    # app=Multi([1,2])
+    # app=Multi(dict(name=12))
     app.run()
