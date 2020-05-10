@@ -136,9 +136,7 @@ class GuyCompo(guy.Guy):
             self._caller(getattr(zelf,method),args)
             # and update all the content
             return self.update()
-            # return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
-            #     id, self._caller( zelf.build ).render(False)
-            # ))
+
 
     def update(self):
         return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
@@ -184,9 +182,9 @@ class Inc(GuyCompo):
     
     def build(self):
         return HBox(
-            Button("-1",onclick=self.bind.add(-1) ),         #<- bind GuyCompo event
+            Button("-",onclick=self.bind.add(-1) ),         #<- bind GuyCompo event
             Text(self.data.v,style="text-align:center"),
-            Button("+1",onclick=self.bind.add(1) ),          #<- bind GuyCompo event
+            Button("+",onclick=self.bind.add(1) ),          #<- bind GuyCompo event
         )
 
     def add(self,v):
@@ -236,11 +234,12 @@ class JustPy(GuyCompo):
     def build(self):
         v= VBox(
             Inc(self.dataBind.v),
-            Text(self.dataBind.v),
+            Text(self.data.v),
             HBox(
                 Text("name:"),
                 # MyInput(self.data.text),
                 MyInput(self.dataBind.text),                #<-- bind data
+                Text(self.data.text)
             ),
             HBox(
                 Text("t1"),
@@ -252,7 +251,7 @@ class JustPy(GuyCompo):
                 Button('In your house',onclick=self.bind.setHouse()),                         #<- bind GuyCompo event
                 Button('In the zoo',onclick=self.bind.setZoo()),                              #<- bind GuyCompo event
             ),
-            Multi(self.dataBind.selected)                   #<-- bind data
+            Multi(self.data.selected)                   #<-- bind data
         )
         for i in range(self.data.v):
             v.add( Text("T%s"%(i+1)) )
