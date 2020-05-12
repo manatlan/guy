@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -u
 from guycompo import GuyCompo
-from tags import A,Body,Box,Button,Div,HBox,Input,Tabs,Tag,Text,Ul,VBox
+from tags import A,Body,Box,Button,Div,HBox,Input,Tabs,Text,Ul,VBox
 from react import State
 
 ####################################################################################
