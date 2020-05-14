@@ -127,7 +127,7 @@ class Sudoku(Guy):
 
     </script>
     """
-    size=(400,410)
+    size=(420,450)
 
     async def init(self):
         await self.js.setGrid( self.random() )
