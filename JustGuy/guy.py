@@ -1,1 +1,0 @@
-/home/manatlan/Documents/python/guy/guy.py
