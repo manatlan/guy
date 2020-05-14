@@ -22,8 +22,8 @@
 # logger for each part
 # cookiejar
 
-                              
-__version__="0.7.1" #the real good one
+                            
+__version__="0.7.1" #first fix for 7
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -1054,14 +1054,25 @@ var self= {
         def repgjs(x):
             return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%(cid,),x)
 
+
+        def _caller(self,method:str,args=[]):
+            print(str(method))
+            r=method(*args)
+            # isBound="bound method" in str(method)
+            # if isBound:
+            #     r=method(*args)
+            # else:
+            #     r=method(self, *args)
+            return r
+
         if hasattr(self,"render"):
-            html = self.render( path )
+            html = _caller(self, self.render, [path] )
             html=repgjs(html)
             return rep(html)
         else:
             if hasattr(self,"_render"):
                 print("**DEPRECATING** use of _render() ... use render() instead !")
-                html = self._render( path )
+                html = _caller(self, self.render, [path] )
                 html=repgjs(html)
                 return rep(html)
             else:
