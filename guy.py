@@ -23,7 +23,7 @@
 # cookiejar
 
                             
-__version__="0.7.1" #first fix for 7
+__version__="0.7.1+" #will be 0.7.2 one day
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
