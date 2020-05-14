@@ -22,8 +22,8 @@
 # logger for each part
 # cookiejar
 
-                              
-__version__="0.7.0" #the real good one
+                            
+__version__="0.7.1" #first fix for 7
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -199,15 +199,12 @@ class GuyJSHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
         self.instance=instance
     async def get(self,id):
-        o=INST.get( id )
+        o=Guy._instances.get( id )
         if o:
             self.write(o._renderJs(id))
         else:
             raise tornado.web.HTTPError(status_code=404)
 
-
-
-INST={}
 
 class FavIconHandler(tornado.web.RequestHandler):
     def initialize(self, instance):
@@ -322,7 +319,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.instance=instance
 
     def open(self,id):
-        o=INST.get( id )
+        o=Guy._instances.get( id )
         if o:
             logger.debug("Connect %s",id)
 
@@ -1037,7 +1034,6 @@ var self= {
 
     def _renderHtml(self,includeGuyJs=True):
         cid=self._id
-        INST[cid]=self # When render -> save the instance in the pool (INST)
 
         path=self._folder
         html=self.__doc__
@@ -1058,14 +1054,25 @@ var self= {
         def repgjs(x):
             return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%(cid,),x)
 
+
+        def _caller(self,method:str,args=[]):
+            print(str(method))
+            r=method(*args)
+            # isBound="bound method" in str(method)
+            # if isBound:
+            #     r=method(*args)
+            # else:
+            #     r=method(self, *args)
+            return r
+
         if hasattr(self,"render"):
-            html = self.render( path )
+            html = _caller(self, self.render, [path] )
             html=repgjs(html)
             return rep(html)
         else:
             if hasattr(self,"_render"):
                 print("**DEPRECATING** use of _render() ... use render() instead !")
-                html = self._render( path )
+                html = _caller(self, self.render, [path] )
                 html=repgjs(html)
                 return rep(html)
             else:
@@ -1084,6 +1091,7 @@ var self= {
 
 class Guy(GuyBase):
     _wsock=None     # when cloned and connected to a client/wsock (only the cloned instance set this)
+    _instances={}   # class variable handling all rendered instances
 
     size=None
     def __init__(self):
@@ -1103,6 +1111,9 @@ class Guy(GuyBase):
                 if not n.startswith("_") and n!="render" :
                     #~ print("------------Route %s: %s" %(self._id,n))
                     self._routes[n]=v
+
+        Guy._instances[self._id]=self # When render -> save the instance in the pool 
+
 
     @property
     def cfg(self):

@@ -25,14 +25,10 @@ class Marco(Guy,Glob):
       <a href="/nowhere">go to nowhere</a>
       <a href="/logo.png">go to logo.png</a>
 
-      <button onclick="self.open()">open</button>
   """
 
   def init(self):
     print("Start Marco")
-
-  def open(self):
-    return Polo()
 
   def t1(self):
     return "t1"

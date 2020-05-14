@@ -31,9 +31,10 @@ body {background: #EEE}
         b.disabled=false;
         console.log(m);
     }
-    guy.on("percent", function( pb,percent ) {
-        document.querySelector("#"+pb+" div").style.width=percent+"%";
-    })
+    
+    function syncProgressBar( pb,percent ) {
+        document.querySelector( `#${pb} div` ).style.width=percent+"%";
+    }
 </script>
 
 
@@ -46,7 +47,7 @@ that it's isolated by instance !
     async def doTheJob(self,pb,speed):
         for i in range(101):
             await asyncio.sleep(speed)    # simulate the job
-            await self.emitMe("percent",pb,i)
+            await self.js.syncProgressBar(pb,i)
         return "Job Done %s!" % pb
 
 

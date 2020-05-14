@@ -1,3 +1,10 @@
+0.7.1 (14/05/2020)
+
+ - FIX: reload(f5) was broken, when using self.render()
+ - remove INST replaced by Guy._instances
+ - create the instance in Guy._instances at __init__
+    
+
 0.7.0 (06/05/2020) : the REAL good one ;-)
 
  - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !

@@ -19,6 +19,21 @@ class MyMethods:
 class App(guy.Guy,MyMethods):
     """
     <script>
+
+    //====================================================
+    var MARKS=[]
+    function mark(t) {
+      MARKS.push(t)
+      document.body.innerHTML+= `<li>${t}</li>`;
+    }
+    
+    guy.on("evtMark", mark)
+
+    async function finnish() {
+      self.exit( MARKS )
+    }
+    //====================================================
+
     async function callOk(v) {
       return await self.mulBy2(v)
     }
@@ -28,14 +43,6 @@ class App(guy.Guy,MyMethods):
       return "ok"
     }
     
-    var MARKS=[]
-    function mark(t) {
-      MARKS.push(t)
-      document.body.innerHTML+= `<li>${t}</li>`;
-    }
-    
-    guy.on("evtMark", mark)
-
     
     async function changeConfig() {
       let v = await guy.cfg.cptClient || 0;
@@ -59,9 +66,6 @@ class App(guy.Guy,MyMethods):
       return "<<myVar>>";
     }
     
-    async function finnish() {
-      self.exit( MARKS )
-    }
 
     async function callTestJsReturn() {
       await self.testJsReturn()
