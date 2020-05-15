@@ -2,12 +2,14 @@
 import sys,os; sys.path.insert(0,os.path.dirname(__file__)+"/..")
 
 import html
+import guy
+
 """
     Working on this
 
     (will replace guycompo & co)
 
-    use guy >=0.7.1 !
+    use guy >=0.7.2 !
 """
 
 #~ from react import ReactiveProp
@@ -53,15 +55,22 @@ assert a+1 == 44
 class Tag:
     tag="div" # default one
     klass=None
+
     def __init__(self,*contents,**attrs):
+        assert "id" not in attrs.keys()
+        self.id=None
         self.tag=self.__class__.tag
         self.contents=list(contents)
         self.attrs=attrs
         self.attrs["class"]=self.klass if self.klass else self.__class__.__name__.lower()
+
     def add(self,o):
         self.contents.append(o)
+
     def __str__(self):
-        attrs=['%s="%s"'%(k if k!="klass" else "class",html.escape( str(v) )) for k,v in self.attrs.items()]
+        attrs=self.attrs
+        if self.id: attrs["id"]=self.id
+        attrs=['%s="%s"'%(k if k!="klass" else "class",html.escape( str(v) )) for k,v in attrs.items()]
         return """<%(tag)s %(attrs)s>%(content)s</%(tag)s>""" % dict(
             tag=self.tag,
             attrs=" ".join(attrs),
@@ -124,14 +133,37 @@ class Li(Tag):
 
 #################################
 
-class DTag(Tag):
+class DTag:
     _dtags={}
     def __init__(self):
         self.id="%s_%s" % (self.__class__.__name__,id(self))
-        super().__init__(id=self.id)
         DTag._dtags[self.id]=self       # maj une liste des dynamic created
-        if hasattr(self,"build"):
-            self.build()
+
+        self._tag = self.build()
+
+    def build(self):
+        """ Override for static build 
+            SHOULD RETURN a "Tag" (not a DTag)
+        """
+        return None
+
+    def render(self):
+        """ Override for dynamic build 
+            SHOULD RETURN a "Tag" (not a DTag)
+        """
+        return None
+
+    def __str__(self):
+        if self._tag is None:
+            o=self.render()
+            assert o,"'%s' doesn't have a build or a render methods ?!" % self.__class__.__name__
+        else:
+            o=self._tag
+            assert self.render() is None, "'%s' has already builded its component ?!" % self.__class__.__name__
+        assert not isinstance(o,DTag), "'%s' produce a DTag, wtf?!" % self.__class__.__name__
+        o.id=self.id
+        return str(o)
+
 
     def getInstance(self,id):
         return DTag._dtags[id]
@@ -177,17 +209,11 @@ class DTag(Tag):
             self.id, self
         ))
 
-    def __str__(self):
-        if hasattr(self,"render"):
-            return str(self.render())
-        else:
-            return super().__str__()
 
 
 
-from guy import Guy
 
-class App(Guy):
+class App(guy.Guy):
     size=(400,300)
 
     def __init__(self,app):
@@ -241,13 +267,12 @@ class Inc(DTag):
         super().__init__()
         
     def build(self):    # called at __init__()
-        self.add( 
-            HBox(
+        return HBox(
                 Button("-",onclick=self.bind.addV(-1) ),         #<- bind GuyCompo event
                 Text(self.bind.cpt,style="text-align:center"),
                 Button("+",onclick=self.bind.addV(1) ),          #<- bind GuyCompo event
             )
-        )
+        
 
     def addV(self,v):
         self.cpt+=v
@@ -260,12 +285,13 @@ class MyInput(DTag):
         super().__init__()
 
     def build(self):
-        self.add( Input(type="text",value=self.v,onchange=self.bind.onchange("this.value")) )
+        return Input(type="text",value=self.v,onchange=self.bind.onchange("this.value"))
 
     def onchange(self,txt):
         self.v = txt
         
 
+        
 class MyTabs(DTag):
 
     def __init__(self,selected:int,tabs:list):
@@ -282,6 +308,12 @@ class MyTabs(DTag):
     def select(self,idx):
         self.selected=idx
 
+        
+class F:
+    def __init__(self,n):
+        self.n=n
+    def __str__(self):
+        return str(Inc(3)) * self.n.get()
 
 class Multi(DTag):
     
@@ -292,21 +324,24 @@ class Multi(DTag):
         super().__init__()
     
     def build(self):    # called at __init__()
-        self.add( MyInput( self.bind.txt ) )
-        self.add( Text(self.bind.txt,self.bind.selected) )
-        self.add( Inc(self.bind.nb) )
-        self.add( Inc(self.bind.nb) )
-        self.add( Inc(self.nb) )
-        self.add( Inc(13) )
-        self.add( Box(self.bind.nb) )
-        self.add( MyTabs(self.bind.selected,["johan","jim"]) )
+        return VBox(
+            MyInput( self.bind.txt ),
+            Text(self.bind.txt,self.bind.selected),
+            Inc(self.bind.nb),
+            Inc(self.bind.nb),
+            Inc(self.nb),
+            Inc(13),
+            Box(self.bind.nb),
+            Box( F(self.bind.nb)  ),
+            MyTabs(self.bind.selected,["johan","jim"]),
+        )
 
 
+        
+        
    
 
 class Decor(DTag):
-    tag="body"
-
     def __init__(self,obj):
         self.obj=obj
         super().__init__()
@@ -329,8 +364,10 @@ class Decor(DTag):
     </div>
   </div>""" % "this.classList.toggle('is-active');document.querySelector('#navbarMenu').classList.toggle('is-active')"
 
-        self.add( Nav(content, role="navigation",aria_label="main navigation") )
-        self.add( Section( Div( self.obj,klass="container") ) )
+        return Body(
+            Nav(content, role="navigation",aria_label="main navigation"),
+            Section( Div( self.obj,klass="container") ),
+        )
 
 
 if __name__=="__main__":
@@ -341,12 +378,15 @@ if __name__=="__main__":
     #~ print(x)
 
 
+    
 
-    #~ tag=Box("helllo")
-    # tag=Multi()
+    #tag=Box("helllo")
+    #tag=Multi()
     tag=Decor( Multi() )
     #~ print(tag)
     #~ print(tag.render())
     #~ quit()
+    print("GUY VERSION:",guy.__version__)
     a=App( tag )
     a.run()
+    
