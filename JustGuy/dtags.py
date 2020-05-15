@@ -42,19 +42,7 @@ class ReactiveProp:
         return "<%s instance=%s attr=%s>" % (self.__class__.__name__,self.instance.id,self.attribut)
     #TODO: add a lot of __slot__ ;-)
 
-class Pojo: pass
-p=Pojo()
-p.a=12
-p.b=42
 
-a=ReactiveProp(p,"a")
-assert int(a)==12
-assert p.__dict__["a"]==12
-a.set(42)
-assert p.__dict__["a"]==42
-assert str(a)=="42"
-assert type(a+1) == ReactiveProp
-assert a+1 == 44
 
 
 class Tag:
@@ -66,12 +54,16 @@ class Tag:
         self.id=None
         self.tag=self.__class__.tag
         self.contents=list(contents)
-        if "content" in attrs:
-            content=attrs["content"]
-            del attrs["content"]
-            self.contents.append(content)
+        if "klass" in attrs:
+            attrs["class"]=attrs["klass"]
+            del attrs["klass"]
+        else:
+            if self.klass:
+                attrs["class"]=self.klass
+            else:
+                attrs["class"]=self.__class__.__name__.lower()
+
         self.attrs=attrs
-        self.attrs["class"]=self.klass if self.klass else self.__class__.__name__.lower()
         self.attrs={k.replace("_","-"):v for k,v in self.attrs.items()}
 
     def add(self,o):
@@ -116,7 +108,7 @@ class Section(Tag):
     tag="section"
 class Nav(Tag):
     tag="nav"
-    klass="navbar is-fixed-top"
+    klass="navbar is-fixed-top is-black"
 
 class VBox(Tag): pass
 class Tabs(Tag):
@@ -230,13 +222,13 @@ class DTag:
         current="%s_%s" % (self.__class__.__name__,id(self))
         o=self.__dict__.get(k)
         if isinstance(o,ReactiveProp):
-            print("Maj %s ReactProp %s <- %s" % (current,k,repr(v)))
+            # print("Maj %s ReactProp %s <- %s" % (current,k,repr(v)))
             if isinstance(v,ReactiveProp):
                 self.__dict__[k]=v
             else:
                 o.set(v)
         else:
-            print("Maj %s Prop %s <- %s" % (current,k,repr(v)))
+            # print("Maj %s Prop %s <- %s" % (current,k,repr(v)))
             super().__setattr__(k,v)
 
     @property
@@ -384,7 +376,7 @@ class Decor(DTag):
 
         return Body(
             Nav( divBrand, divMenu, role="navigation",aria_label="main navigation"),
-            Section( Div( self.obj, klass="container") ),
+            Section( Div( "<br>", self.obj, klass="container") ),
         )
 
     def doExit(self):
