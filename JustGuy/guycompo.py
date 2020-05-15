@@ -3,6 +3,8 @@ import guy,os
 from react import ReactiveProp,DictReactiveProp
 from tags import Div
 
+""" WILL BE DELETED SOON """
+
 class GuyCompo(guy.Guy):
     
     @property

@@ -3,6 +3,9 @@ from guycompo import GuyCompo
 from tags import A,Body,Box,Button,Div,HBox,Input,Tabs,Text,Ul,VBox
 from react import State
 
+""" WILL BE DELETED SOON """
+
+
 ####################################################################################
 ## here come the tests
 ####################################################################################

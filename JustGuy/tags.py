@@ -1,8 +1,6 @@
 #!/usr/bin/python3 -u
 import html
-"""
-    inferface between HTML rendering (BULMA.css oriented)
-"""
+""" WILL BE DELETED SOON """
 
 from react import ReactiveProp
 

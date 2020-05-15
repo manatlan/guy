@@ -1,5 +1,8 @@
 #!/usr/bin/python3 -u
 
+""" WILL BE DELETED SOON """
+
+
 class ReactiveProp:
     def __init__(self,instance,attribut:str):
         self.instance=instance
