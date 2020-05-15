@@ -1,3 +1,7 @@
+0.7.2 (15/05/2020)
+
+ - It's the version which shoulded be the 0.7.1, and fix that bug for real ;-) ... sorry for the noise
+
 0.7.1 (14/05/2020)
 
  - FIX: reload(f5) was broken, when using self.render()
