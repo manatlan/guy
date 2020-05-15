@@ -398,8 +398,7 @@ if __name__=="__main__":
     #~ x=DTag()
     #~ print(x)
 
-    #tag=Box("helllo")
-    #tag=Multi()
+    # tag=Multi()
     tag=Decor( Multi() )
     #~ print(tag)
     #~ print(tag.render())
