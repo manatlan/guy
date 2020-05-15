@@ -136,7 +136,6 @@ class Li(Tag):
 #################################
 
 class App(guy.Guy):
-    size=(400,300)
 
     def __init__(self,app):
         super().__init__()
@@ -185,11 +184,16 @@ class App(guy.Guy):
 
 class DTag:
     _dtags={}
+    size=None
+
     def __init__(self):
         self.id="%s_%s" % (self.__class__.__name__,id(self))
         DTag._dtags[self.id]=self       # maj une liste des dynamic created
 
         self._tag = self.build()
+
+    def __del__(self):
+        del DTag._dtags[self.id]
 
     def build(self):
         """ Override for static build 
@@ -254,14 +258,14 @@ class DTag:
         return Binder()        
 
     def update(self):
-        print("update:"+self.id)
+        #print("update:"+self.id)
         return dict(script="""document.querySelector("#%s").innerHTML=`%s`;""" % (
             self.id, self
         ))
 
-
     def run(self,*a,**k):
         app=App(self)
+        app.size=self.size
         self.exit=app.exit
         return app.run(*a,**k)
 
@@ -366,11 +370,13 @@ class Page2(DTag):
    
 
 class TestApp(DTag):
+    size=(400,300)
+
     def __init__(self):
         self.obj=Page1()
         super().__init__()
 
-    def render(self):
+    def render(self): # DYNAMIC RENDERING HERE !
         divBrand=Div( klass="navbar-brand" )
         divBrand.add( A("<b>MYAPP</b>",klass="navbar-item") )
         divBrand.add( A('<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>',
@@ -403,17 +409,8 @@ class TestApp(DTag):
         self.obj=Page2()
 
 if __name__=="__main__":
-    #~ b=Body("hello",onload="hello()")
-    #~ assert repr(b)=='<body onload="hello()" class="body">hello</body>'
-
-    #~ x=DTag()
-    #~ print(x)
-
     # tag=Multi()
     tag=TestApp()
-    #~ print(tag)
-    #~ print(tag.render())
-    #~ quit()
     
     print( tag.run() )
     
