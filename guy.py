@@ -23,7 +23,7 @@
 # cookiejar
 
                             
-__version__="0.7.1+" #will be 0.7.2 one day
+__version__="0.7.2"
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -1056,13 +1056,11 @@ var self= {
 
 
         def _caller(self,method:str,args=[]):
-            print(str(method))
-            r=method(*args)
-            # isBound="bound method" in str(method)
-            # if isBound:
-            #     r=method(*args)
-            # else:
-            #     r=method(self, *args)
+            isBound=hasattr(method, '__self__')
+            if isBound:
+                r=method(*args)
+            else:
+                r=method(self, *args)
             return r
 
         if hasattr(self,"render"):
