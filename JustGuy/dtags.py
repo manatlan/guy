@@ -27,6 +27,9 @@ class ReactiveProp:
     def __eq__(self,v):
         return self.get() == v
         
+    def __int__(self):
+        return int(self.get())
+
     def __add__(self,v): # add in place
         vv=self.get() + v
         self.set( vv )
@@ -37,6 +40,7 @@ class ReactiveProp:
         
     def __repr__(self):
         return "<%s instance=%s attr=%s>" % (self.__class__.__name__,self.instance.id,self.attribut)
+    #TODO: add a lot of __slot__ ;-)
 
 class Pojo: pass
 p=Pojo()
@@ -44,6 +48,7 @@ p.a=12
 p.b=42
 
 a=ReactiveProp(p,"a")
+assert int(a)==12
 assert p.__dict__["a"]==12
 a.set(42)
 assert p.__dict__["a"]==42
@@ -160,7 +165,7 @@ class DTag:
         else:
             o=self._tag
             assert self.render() is None, "'%s' has already builded its component ?!" % self.__class__.__name__
-        assert not isinstance(o,DTag), "'%s' produce a DTag, wtf?!" % self.__class__.__name__
+        assert not isinstance(o,DTag), "'%s' produce a DTag, wtf?!" % self.__class__.__name__ # because it's a non-sense that a Dtag return a Dtag .. that's all!
         o.id=self.id
         return str(o)
 
@@ -309,11 +314,15 @@ class MyTabs(DTag):
         self.selected=idx
 
         
-class F:
+class DynCreate(DTag):
     def __init__(self,n):
         self.n=n
-    def __str__(self):
-        return str(Inc(3)) * self.n.get()
+        super().__init__()
+    def render(self):
+        b=Box()
+        for i in range( int(self.n) ):
+            b.add(Inc(i))
+        return b
 
 class Multi(DTag):
     
@@ -332,7 +341,7 @@ class Multi(DTag):
             Inc(self.nb),
             Inc(13),
             Box(self.bind.nb),
-            Box( F(self.bind.nb)  ),
+            DynCreate(self.bind.nb),
             MyTabs(self.bind.selected,["johan","jim"]),
         )
 
@@ -346,7 +355,7 @@ class Decor(DTag):
         self.obj=obj
         super().__init__()
 
-    def build(self):
+    def render(self):
         content="""
   <div class="navbar-brand">
     <a class="navbar-item"><b>MyApp</b></a>
@@ -357,16 +366,16 @@ class Decor(DTag):
     </a>
   </div>
 
-  <div id="navbarMenu" class="navbar-menu">
+  <div class="navbar-menu">
     <div class="navbar-start">
       <a class="navbar-item">Home</a>
       <a class="navbar-item">Documentation</a>
     </div>
-  </div>""" % "this.classList.toggle('is-active');document.querySelector('#navbarMenu').classList.toggle('is-active')"
+  </div>""" % "this.classList.toggle('is-active');document.querySelector('.navbar-menu').classList.toggle('is-active')"
 
         return Body(
-            Nav(content, role="navigation",aria_label="main navigation"),
-            Section( Div( self.obj,klass="container") ),
+            Nav( content, role="navigation",aria_label="main navigation"),
+            Section( Div( self.obj, klass="container") ),
         )
 
 
@@ -376,9 +385,6 @@ if __name__=="__main__":
 
     #~ x=DTag()
     #~ print(x)
-
-
-    
 
     #tag=Box("helllo")
     #tag=Multi()
