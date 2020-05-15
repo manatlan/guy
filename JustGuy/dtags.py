@@ -66,8 +66,13 @@ class Tag:
         self.id=None
         self.tag=self.__class__.tag
         self.contents=list(contents)
+        if "content" in attrs:
+            content=attrs["content"]
+            del attrs["content"]
+            self.contents.append(content)
         self.attrs=attrs
         self.attrs["class"]=self.klass if self.klass else self.__class__.__name__.lower()
+        self.attrs={k.replace("_","-"):v for k,v in self.attrs.items()}
 
     def add(self,o):
         self.contents.append(o)
@@ -137,6 +142,54 @@ class Li(Tag):
     tag="li"
 
 #################################
+
+class App(guy.Guy):
+    size=(400,300)
+
+    def __init__(self,app):
+        super().__init__()
+        self._tag=app
+
+    def render(self,path=None):
+        return """<!DOCTYPE html>
+        <html>
+            <head>
+                <script>
+                if(!sessionStorage["gid"]) sessionStorage["gid"]=Math.random().toString(36).substring(2);
+                var GID=sessionStorage["gid"];
+                
+                async function launchApp() {    // NOT USED YET !!
+                    await self.startApp(GID);
+                }
+                </script>
+            
+                <script src="guy.js"></script>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
+
+                <style>
+                div.hbox {display: flex;flex-flow: row nowrap;align-items:center }
+                div.vbox {display: flex;flex-flow: column nowrap;}
+                div.hbox > *,div.vbox > * {flex: 1 1 50%%;margin:1px}
+                </style> 
+            </head>
+            <body>%s</body>
+        </html>
+        """ % self._tag
+        
+    def bindUpdate(self,id:str,method:str,*args):
+        obj=self._tag.getInstance(id)
+        r=getattr(obj,method)(*args)
+        return self.update()    # currently it update all ;-(
+        
+    def update(self):
+        """ Exposed in py/side !"""
+        return self._tag.update()
+        
+        
+
+
 
 class DTag:
     _dtags={}
@@ -215,54 +268,11 @@ class DTag:
         ))
 
 
+    def run(self,*a,**k):
+        app=App(self)
+        self.exit=app.exit
+        return app.run(*a,**k)
 
-
-
-class App(guy.Guy):
-    size=(400,300)
-
-    def __init__(self,app):
-        super().__init__()
-        self._tag=app
-
-    def render(self,path=None):
-        return """<!DOCTYPE html>
-        <html>
-            <head>
-                <script>
-                if(!sessionStorage["gid"]) sessionStorage["gid"]=Math.random().toString(36).substring(2);
-                var GID=sessionStorage["gid"];
-                
-                async function launchApp() {
-                    await self.startApp(GID);
-                }
-                </script>
-            
-                <script src="guy.js"></script>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
-
-                <style>
-                div.hbox {display: flex;flex-flow: row nowrap;align-items:center }
-                div.vbox {display: flex;flex-flow: column nowrap;}
-                div.hbox > *,div.vbox > * {flex: 1 1 50%%;margin:1px}
-                </style> 
-            </head>
-            <body>%s</body>
-        </html>
-        """ % self._tag
-        
-    def bindUpdate(self,id:str,method:str,*args):
-        obj=self._tag.getInstance(id)
-        r=getattr(obj,method)(*args)
-        return self.update()    # currently it update all ;-(
-        
-    def update(self):
-        """ Exposed in py/side !"""
-        return self._tag.update()
-        
-        
 
 
 
@@ -356,27 +366,29 @@ class Decor(DTag):
         super().__init__()
 
     def render(self):
-        content="""
-  <div class="navbar-brand">
-    <a class="navbar-item"><b>MyApp</b></a>
-    <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample" onclick="%s">
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-    </a>
-  </div>
+        divBrand=Div( klass="navbar-brand" )
+        divBrand.add( A("<b>MYAPP</b>",klass="navbar-item") )
+        divBrand.add( A('<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>',
+                        role="button",
+                        klass="navbar-burger burger",
+                        aria_label="menu",
+                        aria_expanded="false",
+                        data_target="navbarBasicExample",
+                        onclick="this.classList.toggle('is-active');document.querySelector('.navbar-menu').classList.toggle('is-active')") )
 
-  <div class="navbar-menu">
-    <div class="navbar-start">
-      <a class="navbar-item">Home</a>
-      <a class="navbar-item">Documentation</a>
-    </div>
-  </div>""" % "this.classList.toggle('is-active');document.querySelector('.navbar-menu').classList.toggle('is-active')"
+        divMenu=Div( klass="navbar-menu" )
+        menu=Div(klass="navbar-start")
+        menu.add( A("Home", klass="navbar-item") )
+        menu.add( A("Exit", klass="navbar-item", onclick=self.bind.doExit() ) )
+        divMenu.add( menu )
 
         return Body(
-            Nav( content, role="navigation",aria_label="main navigation"),
+            Nav( divBrand, divMenu, role="navigation",aria_label="main navigation"),
             Section( Div( self.obj, klass="container") ),
         )
+
+    def doExit(self):
+        self.exit(-1)
 
 
 if __name__=="__main__":
@@ -392,7 +404,6 @@ if __name__=="__main__":
     #~ print(tag)
     #~ print(tag.render())
     #~ quit()
-    print("GUY VERSION:",guy.__version__)
-    a=App( tag )
-    a.run()
+    
+    print( tag.run() )
     
