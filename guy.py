@@ -960,7 +960,16 @@ var guy={
         else
             document.addEventListener("init", start)
     },
+    _cptFetch: 0,
+    _applyClass: function(i) {
+        guy._cptFetch+=i;
+        if(guy._cptFetch>0)
+            document.body.classList.add("wsguy")
+        else
+            document.body.classList.remove("wsguy")
+    },
     _call: function( method, args ) {
+        guy._applyClass(1);
         guy.log("guy.call:","CALL",method,args)
         var cmd={
             command:    method,
@@ -973,6 +982,7 @@ var guy={
 
             return new Promise( function (resolve, reject) {
                 document.addEventListener('guy-'+cmd.uuid, function handler(x) {
+                    guy._applyClass(-1);
                     guy.log("guy.call:","RESPONSE",method,"-->",x.detail)
                     this.removeEventListener('guy-'+cmd.uuid, handler);
                     var x=x.detail;

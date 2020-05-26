@@ -1,6 +1,7 @@
 0.7.2+ (IN PROGRESS ....the next one ;-)
 
- - Add guy.WSGUY to be able to set manually the ws server (ex: glitch app with custom domain)) (ex: wss://example.com)
+ - EVOL: Add guy.WSGUY to be able to set manually the ws server (ex: glitch app with custom domain)) (ex: wss://example.com)
+ - EVOL: automatically apply a "wsguy" class on body, when socket-communication (client to server)
 
 0.7.2 (15/05/2020)
 
