@@ -1,3 +1,8 @@
+0.7.3 (26/05/2020)
+
+ - EVOL: Add guy.WSGUY to be able to set manually the ws server (ex: glitch app with custom domain)) (ex: wss://example.com)
+ - EVOL: automatically apply a "wsguy" class on body, when socket-communication (client to server)
+
 0.7.2 (15/05/2020)
 
  - It's the version which shoulded be the 0.7.1, and fix that bug for real ;-) ... sorry for the noise
@@ -7,12 +12,12 @@
  - FIX: reload(f5) was broken, when using self.render()
  - remove INST replaced by Guy._instances
  - create the instance in Guy._instances at __init__
-    
+
 
 0.7.0 (06/05/2020) : the REAL good one ;-)
 
  - EVOL (BROKE COMPATIBILITY): new way to return (.run()->x ,.runcef()->x,.serve()->x) with exit(x) : x is returned !
- - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce" 
+ - FIX: (server mode : isolation context execution was broken for 0.4.3 < version <=0.6.0 ) since commit "bf869e1cad5d630c1a2f38858b2da98ecaae60ce"
         Now, it's a lot better !
  - EVOL: remove (previously deprecated) "embedded window" (instanciateWindow)
  - EVOL: nice quit when cef is broken (cefpython3+py3.8.2 on linux)
@@ -43,7 +48,7 @@
 0.5.5: (26/03/2020)
 
  - FIX: on win, when freezed, cant be considered as module
- 
+
 0.5.4: (21/03/2020)
 
  - FIX: ability to read html files with encoding utf8 or cp1252
@@ -62,16 +67,16 @@
 0.5.0: (08/02/2020)
  - BIGGEST CHANGES:
     - "real instances" (no more clonage) .. a lot simpler
-    - better system to manage instances (same fo embbeded or redirected) 
+    - better system to manage instances (same fo embbeded or redirected)
     - pyside: each window now have a reference (.parent) to the main instance (the one which starts all)
-    - a lot of little fixes 
+    - a lot of little fixes
     - more pytest coverage (mainly main features)
     - _render() -> render() and replace "guy.js" in all cases
     - resolve query params when redirecting to another instance for match the constructor
 
 0.4.3: (01/02/2020)
  - EVOL: Py side : can call js method directly ( `await self.js.jsmethod(...)` )
- 
+
 0.4.2: (31/01/2020)
  - FIX : trouble to find config folder when symbolic link used
  - EVOL: "init" can now be async too
@@ -83,7 +88,7 @@
 
 0.4.0: (26/01/2020)
 
-- BIG CHANGES : 
+- BIG CHANGES :
     - Guy doesn't change/enforce the CWD !!!
     - Ability to be embbeded in a pip/package (see the how-to with poetry)
     - When pip-packaged : save in `~/.<package_name>.json`
@@ -115,7 +120,7 @@ changelog 0.3.6 "i-wall":
 - auto remove broken socket
 - better children rendered (new methods)
 - serve(...open=True...) to open browser by default
-    
+
 changelog 0.3.5:
 
 - js handler now use urlparse (better)
