@@ -1,4 +1,4 @@
-**GUY** is a py3 module, which let you quickly release a GUI (html/js) for yours python (>=3.5) scripts, targetting **any** platforms ... and **android** too. 
+**GUY** is a py3 module, which let you quickly release a GUI (html/js) for yours python (>=3.5) scripts, targetting **any** platforms ... and **android** too.
 
 A simple **guy's app** code, could be :
 
@@ -49,10 +49,12 @@ Here is a simple **guy's app** (**app mode**):
 <img src="https://manatlan.github.io/guy/shot_ubuntu.png" width="300" border="1" style="border:1px solid black"/>             </td>
             <td valign="top">
                 On Android10<br>
-    <img src="https://manatlan.github.io/guy/shot_android10.jpg" width="300" border="1" style="border:1px solid black"/>                
+    <img src="https://manatlan.github.io/guy/shot_android10.jpg" width="300" border="1" style="border:1px solid black"/>
            </td>
         </tr>
     </table>
 </p>
 
 [![Join the chat at https://gitter.im/guy-python/community](https://badges.gitter.im/jessedobbelaere/ckeditor-iconfont.svg)](https://gitter.im/guy-python/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+If you want to build guy app, without any html/js/css knowlegments, you can try [gtag](https://github.com/manatlan/gtag) : it's a guy sub module which let you build GUI/GUY app in [more classical/python3 way](https://github.com/manatlan/gtag/wiki).
