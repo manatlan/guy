@@ -22,7 +22,7 @@
 # logger for each part
 # cookiejar
 
-                            
+
 __version__="0.7.2+"
 
 import os,sys,re,traceback,copy,types,shutil
@@ -55,6 +55,7 @@ class FULLSCREEN: pass
 ISANDROID = "android" in sys.executable
 FOLDERSTATIC="static"
 CHROMECACHE=".cache"
+WSGUY=None # or "wss://example.com" (ws server)
 class JSException(Exception): pass
 
 handler = logging.StreamHandler()
@@ -86,11 +87,11 @@ async def callhttp(web,path): # web: RequestHandler
                 ret=await method(web,*g.groups())
             else:
                 ret=method(web,*g.groups())
-                
+
             if isinstance(ret,Guy):
                 ret.parent = web.instance
                 web.write( ret._renderHtml() )
-            return True                
+            return True
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
 def wsquery(wsurl,msg): # Synchrone call, with tornado
@@ -98,8 +99,8 @@ def wsquery(wsurl,msg): # Synchrone call, with tornado
             ws = websocket.create_connection(wsurl)
             ws.send(msg)
             resp=ws.recv()
-            ws.close() 
-            return resp            
+            ws.close()
+            return resp
     """
     @gen.coroutine
     def fct(ioloop,u,content):
@@ -109,7 +110,7 @@ def wsquery(wsurl,msg): # Synchrone call, with tornado
         cnx.close()
         ioloop.stop()
         ioloop.response=resp
-    
+
     ioloop = IOLoop.instance()
     fct(ioloop,wsurl,msg)
     ioloop.start()
@@ -274,7 +275,7 @@ class ProxyHandler(tornado.web.RequestHandler):
     async def _do(self,method,body,qargs):
         url = str(qargs.get('url'))
         if not urlparse(url.lower()).scheme:
-            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/")) 
+            url="http://%s:%s/%s"% (self.instance._webserver[0],self.instance._webserver[1],url.lstrip("/"))
 
         if self.request.query:
             url = url + "?" + self.request.query
@@ -344,7 +345,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         current = WebSocketHandler.clients.get(self,None)
         if current is None:
             return
-          
+
         o = jLoads(message)
         logger.debug("WS RECEPT: %s",o)
         method,args,uuid = o["command"],o.get("args"),o["uuid"]
@@ -532,7 +533,7 @@ class ChromeApp:
                 args.append("--user-data-dir=%s/%s" % (CHROMECACHE,appname))
             else:
                 self.cacheFolderToRemove=os.path.join(tempfile.gettempdir(),appname+"_"+str(os.getpid()))
-                args.append("--user-data-dir=" + self.cacheFolderToRemove) 
+                args.append("--user-data-dir=" + self.cacheFolderToRemove)
                 args.append("--aggressive-cache-discard")
                 args.append("--disable-cache")
                 args.append("--disable-application-cache")
@@ -559,7 +560,7 @@ class ChromeApp:
     def __del__(self): # really important !
         self._p.kill()
         if self.cacheFolderToRemove: shutil.rmtree(self.cacheFolderToRemove, ignore_errors=True)
-            
+
     #~ def _com(self, payload: dict):
         #~ """ https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-close """
         #~ payload["id"] = 1
@@ -676,7 +677,7 @@ def chromeBringToFront(port):
         url = http_client.fetch("http://localhost:%s/json" % port).body
         wsurl= json.loads(url)[0]["webSocketDebuggerUrl"]
         wsquery(wsurl,json.dumps(dict(id=1,method="Page.bringToFront")))
-        return True        
+        return True
 
 class LockPortFile:
     def __init__(self,name):
@@ -686,7 +687,7 @@ class LockPortFile:
         if os.path.isfile(self._file): # the file is here, perhaps it's running
             with open(self._file,"r") as fid:
                 port=fid.read()
-            
+
             if not isFree("localhost", int(port)): # if port is taken, perhaps it's running
                 http_client = tornado.httpclient.HTTPClient()
                 url = http_client.fetch("http://localhost:%s/json" % port).body
@@ -695,7 +696,7 @@ class LockPortFile:
                 wsquery(wsurl,json.dumps(dict(id=1,method="Page.bringToFront")))
                 return True
 
-    
+
     def create(self) -> int:
         if os.path.isfile(self._file):
             os.unlink(self._file)
@@ -717,7 +718,7 @@ class GuyBase:
     def run(self,log=False,autoreload=False,one=False,args=[]):
         """ Run the guy's app in a windowed env (one client)"""
         self._log=log
-        if log: 
+        if log:
             handler.setLevel(logging.DEBUG)
             logger.setLevel(logging.DEBUG)
 
@@ -731,7 +732,7 @@ class GuyBase:
                     return
                 else:
                     lockPort = lp.create()
-            
+
             ws=WebServer( self, autoreload=autoreload )
             ws.start()
 
@@ -760,7 +761,7 @@ class GuyBase:
     def runCef(self,log=False,autoreload=False,one=False):
         """ Run the guy's app in a windowed cefpython3 (one client)"""
         self._log=log
-        if log: 
+        if log:
             handler.setLevel(logging.DEBUG)
             logger.setLevel(logging.DEBUG)
 
@@ -800,7 +801,7 @@ class GuyBase:
     def serve(self,port=8000,log=False,open=True,autoreload=False):
         """ Run the guy's app for multiple clients (web/server mode) """
         self._log=log
-        if log: 
+        if log:
             handler.setLevel(logging.DEBUG)
             logger.setLevel(logging.DEBUG)
 
@@ -845,7 +846,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 
 function setupWS( cbCnx ) {
-    var url=window.location.origin.replace("http","ws")+"/%s-ws"
+    var url=%s+"/%s-ws"
     var ws=new WebSocket( url );
 
     ws.onmessage = function(evt) {
@@ -1025,6 +1026,7 @@ var self= {
 
 """ % (
         'if(!document.title) document.title="%s";' % self._name,
+        'window.location.origin.replace("http","ws")' if WSGUY is None else '"%s"'%WSGUY,
         id, # for the socket
         "true" if self._log else "false",
         "\n".join(["""\n%s:function(_) {return guy._call("%s", Array.prototype.slice.call(arguments) )},""" % (k, k) for k in routes])
@@ -1110,7 +1112,7 @@ class Guy(GuyBase):
                     #~ print("------------Route %s: %s" %(self._id,n))
                     self._routes[n]=v
 
-        Guy._instances[self._id]=self # When render -> save the instance in the pool 
+        Guy._instances[self._id]=self # When render -> save the instance in the pool
 
 
     @property
@@ -1157,7 +1159,7 @@ class Guy(GuyBase):
         return Proxy()
 
     def exit(self,v=None):
-        if self._callbackExit: 
+        if self._callbackExit:
             self._callbackExit(v)
         else:
             self.parent._callbackExit(v)
