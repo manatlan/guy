@@ -1,6 +1,6 @@
 0.7.3+ (next version ready)
 
-    ...
+ - FIX: autoreload was broken
 
 0.7.3 (26/05/2020)
 

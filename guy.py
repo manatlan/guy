@@ -739,7 +739,7 @@ class GuyBase:
             app=ChromeApp(ws.startPage,self._name,self.size,lockPort=lockPort,chromeargs=args)
 
             self.RETOUR=None
-            def exit(v):
+            def exit(v=None):
                 self.RETOUR=v
 
                 ws.exit()
@@ -780,7 +780,7 @@ class GuyBase:
         try:
             app=CefApp(ws.startPage,self.size,lockPort=lockPort)
 
-            def cefexit(v):
+            def cefexit(v=None):
                 self.RETOUR=v
                 app.exit()
 
@@ -809,7 +809,7 @@ class GuyBase:
         ws.start()
 
         self.RETOUR=None
-        def exit(v):
+        def exit(v=None):
             self.RETOUR=v
             ws.exit()
 
