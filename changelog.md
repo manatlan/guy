@@ -1,3 +1,7 @@
+0.7.4 (27/05/2020)
+
+ - FIX: autoreload was broken
+
 0.7.3 (26/05/2020)
 
  - EVOL: Add guy.WSGUY to be able to set manually the ws server (ex: glitch app with custom domain)) (ex: wss://example.com)
