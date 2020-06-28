@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "guy"
-version = "0.7.4+"
+version = "0.7.5"
 description = "A simple module for making HTML GUI applications with python3"
 authors = ["manatlan <manatlan@gmail.com>"]
 readme = 'README.md'
