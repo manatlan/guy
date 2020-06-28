@@ -23,7 +23,7 @@
 # cookiejar
 
 
-__version__="0.7.3+"
+__version__="0.7.5"
 
 import os,sys,re,traceback,copy,types,shutil
 from urllib.parse import urlparse
@@ -1064,7 +1064,7 @@ var self= {
             return x
 
         def repgjs(x):
-            return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="/%s-js"'%(cid,),x)
+            return re.sub('''src *= *(?P<quote>["'])[^(?P=quote)]*guy\\.js[^(?P=quote)]*(?P=quote)''','src="%s-js"'%(cid,),x)
 
 
         def _caller(self,method:str,args=[]):

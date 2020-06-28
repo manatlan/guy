@@ -1,3 +1,7 @@
+0.7.5 (28/06/2020)
+
+ - FIX: the guy js is now included relatively (no more absolute path)
+
 0.7.4 (27/05/2020)
 
  - FIX: autoreload was broken
