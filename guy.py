@@ -460,6 +460,11 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
+        try:
+            if hasattr(self.instance,"afterServerStarted"):
+                self.instance.afterServerStarted(self, None)
+        except Exception as err:
+            logger.error(f"Error in afterServerStarted Event: {str(err)}")
 
         async def _waitExit():
             while self._exit==False:
@@ -762,12 +767,7 @@ class GuyBase:
             tornado.autoreload.add_reload_hook(exit)
 
             self._callbackExit = exit
-            if hasattr(self, "afterServerStarted"):
-                try:
-                    if hasattr(self, "afterServerStarted"):
-                        self.afterServerStarted(ws, app)
-                except Exception as err:
-                    logger.error(f"Error in afterServerStarted Event: {str(err)}")
+
             try:
                 app.wait() # block
             except KeyboardInterrupt:
@@ -807,12 +807,7 @@ class GuyBase:
             tornado.autoreload.add_reload_hook(app.exit)
 
             self._callbackExit = cefexit
-            if hasattr(self, "afterServerStarted"):
-                try:
-                    if hasattr(self, "afterServerStarted"):
-                        self.afterServerStarted(ws, app)
-                except Exception as err:
-                    logger.error(f"Error in afterServerStarted Event: {str(err)}")
+
             try:
                 app.wait() # block
             except KeyboardInterrupt:
@@ -848,12 +843,7 @@ class GuyBase:
                 webbrowser.open_new_tab(ws.startPage)
             except:
                 pass
-        if hasattr(self,"afterServerStarted"):
-            try:
-                if hasattr(self, "afterServerStarted"):
-                    self.afterServerStarted(ws,None)
-            except Exception as err:
-                logger.error(f"Error in afterServerStarted Event: {str(err)}")
+
         try:
             ws.join() #important !
         except KeyboardInterrupt:
