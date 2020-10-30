@@ -1,3 +1,7 @@
+0.7.6 (30/10/2020)
+
+ - EVOL: added _tornado to instance, cleanup event, afterServerStarted event (thks for the PR @robert-boulanger)
+
 0.7.5 (28/06/2020)
 
  - FIX: the guy js is now included relatively (no more absolute path)
