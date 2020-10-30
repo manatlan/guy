@@ -337,9 +337,22 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             WebSocketHandler.clients[self]=o
 
     def on_close(self):
-        current=WebSocketHandler.clients[self]
-        logger.debug("Disconnect %s",current._id)
-        del WebSocketHandler.clients[self]
+        try:
+            current = WebSocketHandler.clients[self]
+            logger.debug("Disconnect %s", current._id)
+
+            async def doCleanUp(instance):
+                cleanup = instance._getRoutage("cleanup")
+                if cleanup:
+                    if asyncio.iscoroutinefunction(cleanup):
+                        await instance(self, "cleanup")
+                    else:
+                        instance(self, "cleanup")
+
+            asyncio.ensure_future(doCleanUp(current))
+            del WebSocketHandler.clients[self]
+        except KeyError:
+            pass
 
     async def on_message(self, message):
         current = WebSocketHandler.clients.get(self,None)
@@ -415,6 +428,7 @@ class WebServer(Thread): # the webserver is ran on a separated thread
             self.port += 1
 
         self.instance._webserver=(self.host,self.port)
+        self.instance._tornado = self
 
         try: # https://bugs.python.org/issue37373 FIX: tornado/py3.8 on windows
             if sys.platform == 'win32':
@@ -446,6 +460,11 @@ class WebServer(Thread): # the webserver is ran on a separated thread
         self.app.listen(self.port,address=self.host)
 
         self.loop=asyncio.get_event_loop()
+        try:
+            if hasattr(self.instance,"afterServerStarted"):
+                self.instance.afterServerStarted(self, None)
+        except Exception as err:
+            logger.error(f"Error in afterServerStarted Event: {str(err)}")
 
         async def _waitExit():
             while self._exit==False:
@@ -748,6 +767,7 @@ class GuyBase:
             tornado.autoreload.add_reload_hook(exit)
 
             self._callbackExit = exit
+
             try:
                 app.wait() # block
             except KeyboardInterrupt:
@@ -787,6 +807,7 @@ class GuyBase:
             tornado.autoreload.add_reload_hook(app.exit)
 
             self._callbackExit = cefexit
+
             try:
                 app.wait() # block
             except KeyboardInterrupt:
