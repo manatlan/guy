@@ -29,7 +29,7 @@ A **guy's app** can be released as :
  - a [pip/package app](https://guy-docs.glitch.me/howto_build_whl_package/) (all modes)
  - an **apk** for android (with buildozer/kivy) (**app mode** only)
 
-Read the [Guy's DOCUMENTATION](https://guy-docs.glitch.me/) !
+Read the [Guy's DOCUMENTATION](https://manatlan.github.io/guy/) !
 
 Available on :
 
