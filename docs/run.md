@@ -30,6 +30,10 @@ Optionnal parameters:
  - one: (bool), permit to run just once instance at the same time (if True, running a second one will re-focus to the already runned one), default: False
  - log: (bool) enable logging (client & server side) (don't have any effect on android), default: False
  - autoreload: (bool) autoreload on changes (don't have any effect on android), default: False
+ - args: (list) add any additional startup arguments for the browser. _Example:_ `args=["--autoplay-policy=no-user-gesture-required"]`
+
+
+`app.run(one=True, args=["--autoplay-policy=no-user-gesture-required"])`
 
 To be able to store things in js/localStorage, you must use the `one` parameter, to make storage persistent. By default, storage is not persistent, and removed after each use!
 
