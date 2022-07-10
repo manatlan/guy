@@ -1,0 +1,812 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Simple GUI (using chrome) for python">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.3.8">
+    
+    
+      
+        <title>Release an APK/android - Guy's Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.1d29e8d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.cbb835fc.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#ab47bd">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="purple" data-md-color-accent="purple">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#how-to-build-an-apk-for-android" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Guy&#39;s Docs" class="md-header__button md-logo" aria-label="Guy's Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Guy's Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release an APK/android
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/manatlan/guy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    manatlan/guy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Guy&#39;s Docs" class="md-nav__button md-logo" aria-label="Guy's Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Guy's Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/manatlan/guy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    manatlan/guy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../simplest/" class="md-nav__link">
+        Example
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../anatomy/" class="md-nav__link">
+        Anatomy
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server/" class="md-nav__link">
+        Server side
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../client/" class="md-nav__link">
+        Client side
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multiple/" class="md-nav__link">
+        Multiple Instance
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/" class="md-nav__link">
+        Run guy's app
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../demo/" class="md-nav__link">
+        Demo
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_10" type="checkbox" id="__nav_10" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_10">
+          How-to
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="How-to" data-md-level="1">
+        <label class="md-nav__title" for="__nav_10">
+          <span class="md-nav__icon md-icon"></span>
+          How-to
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../howto_migrate_from_wuy_to_guy/" class="md-nav__link">
+        From wuy to guy
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../howto_build_exe_windows/" class="md-nav__link">
+        Freeze exe/windows
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Release an APK/android
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Release an APK/android
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-the-tools" class="md-nav__link">
+    Install the tools
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-your-first-guys-apk" class="md-nav__link">
+    Create your first Guy's apk
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authorize-clear-text-traffic-in-your-apk" class="md-nav__link">
+    Authorize "Clear Text Traffic" in your APK
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-in-androids-playstore" class="md-nav__link">
+    Deploy in android's playstore
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    Known Limitations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    Sources
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../howto_build_whl_package/" class="md-nav__link">
+        Release a pypi/whl/package
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-the-tools" class="md-nav__link">
+    Install the tools
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-your-first-guys-apk" class="md-nav__link">
+    Create your first Guy's apk
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authorize-clear-text-traffic-in-your-apk" class="md-nav__link">
+    Authorize "Clear Text Traffic" in your APK
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-in-androids-playstore" class="md-nav__link">
+    Deploy in android's playstore
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    Known Limitations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    Sources
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+
+<h1 id="how-to-build-an-apk-for-android">How to build an APK for Android</h1>
+<p>You will need to install <a href="https://kivy.org/">kivy</a> and <a href="https://pypi.org/project/buildozer/">buildozer</a> !</p>
+<p>This How-to assume that you use a linux platform ;-)</p>
+<h2 id="install-the-tools">Install the tools</h2>
+<div class="codehilite"><pre><span></span><code>sudo apt install python3-kivy zipalign
+python3 -m pip install --upgrade buildozer
+</code></pre></div>
+
+<p>Note :</p>
+<ul>
+<li>you should install the kivy version which belongs to your platform</li>
+<li>For buildozer : you can pip it !</li>
+</ul>
+<h2 id="create-your-first-guys-apk">Create your first Guy's apk</h2>
+<p>Create an empty folder, and from a console inside the folder</p>
+<p>Get <code>guy.py</code> module (needed, to be embedded in apk)</p>
+<div class="codehilite"><pre><span></span><code>wget https://raw.githubusercontent.com/manatlan/guy/master/guy.py
+</code></pre></div>
+
+<p>Get an icon/splashscreen for the apk</p>
+<div class="codehilite"><pre><span></span><code>wget https://raw.githubusercontent.com/manatlan/guy/master/android/data/logo.png
+</code></pre></div>
+
+<p>Create the file <code>buildozer.spec</code> (<a href="https://buildozer.readthedocs.io/en/latest/specifications.html">specs</a>), with this content:</p>
+<div class="codehilite"><pre><span></span><code>[app]
+title = Guy Demo
+package.name = com.guy
+package.domain = demo
+source.dir = .
+source.include_exts =
+version = 0.1
+requirements = python3,kivy,tornado
+presplash.filename = %(source.dir)s/logo.png
+icon.filename = %(source.dir)s/logo.png
+orientation = portrait
+osx.python_version = 3
+osx.kivy_version = 1.9.1
+fullscreen = 0
+android.permissions = INTERNET
+android.api = 28
+android.ndk = 17c
+android.arch = arm64-v8a
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
+</code></pre></div>
+
+<p>(You can setup your <a href="https://developer.android.com/reference/android/Manifest.permission.html">android.permissions</a> according your needs (separated by comma "<code>,</code>"))</p>
+<p>Create the file <code>main.py</code> (your file app should be named <code>main.py</code>, it's a buildozer's request):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">guy</span> <span class="kn">import</span> <span class="n">Guy</span>
+
+<span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="n">Guy</span><span class="p">):</span>
+    <span class="vm">__doc__</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;&lt;button onclick=&quot;self.test().then( function(x) {document.body.innerHTML+=x})&quot;&gt;test&lt;/button&gt;&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;hello world&quot;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">=</span><span class="n">Hello</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Run the app in your environment ... to be sure it works as is</p>
+<div class="codehilite"><pre><span></span><code>python3 main.py
+</code></pre></div>
+
+<p>Connect your smartphone with an usb cable to your computer (and allow <code>file transfer</code> mode in your android), and run:</p>
+<div class="codehilite"><pre><span></span><code>buildozer android debug deploy run
+</code></pre></div>
+
+<p>First run is very long (more than 20min on my computer), second run is a lot faster (10sec) ...</p>
+<p>Your android will prompt you to authorize the installation : check yes ...</p>
+<p>Your app should start on the phone ;-)</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>But, recent android, doesn't allow to use http traffic (error <code>ERR_CLEARTEXT_NOT_PERMITTED</code>). So you will need to authorize "Clear Text Traffic" for your APK. It's not a problem, or a security risk (the app will only listening http on localhost), see next section.</p>
+</div>
+<h2 id="authorize-clear-text-traffic-in-your-apk">Authorize "Clear Text Traffic" in your APK</h2>
+<p>You will need to authorize your app to access the embedded python http server, which serve on localhost "http" only. To do that, you must enable "Clear Text Traffic" in your "AndroidManifest.xml". Using buildozer, you can change the template which will be used to generate the original.</p>
+<p>Open your file <code>.buildozer/android/platform/build/dists/&lt;&lt;package.name&gt;&gt;/templates/AndroidManifest.tmpl.xml</code>
+(.buildozer/android/platform/build/dists/com.guy/templates/AndroidManifest.tmpl.xml)</p>
+<p>Add <code>android:usesCleartextTraffic="true"</code> in tag <code>&lt;application&gt;</code> in <code>AndroidManifest.tmpl.xml</code></p>
+<p>Search the tag <code>&lt;application&gt;</code> which look like this :</p>
+<div class="codehilite"><pre><span></span><code>    <span class="nt">&lt;application</span> <span class="na">android:label=</span><span class="s">&quot;@string/app_name&quot;</span>
+                 <span class="na">android:icon=</span><span class="s">&quot;@drawable/icon&quot;</span>
+                 <span class="na">android:allowBackup=</span><span class="s">&quot;{{ args.allow_backup }}&quot;</span>
+                 <span class="na">android:theme=</span><span class="s">&quot;@android:style/Theme.NoTitleBar{% if not args.window %}.Fullscreen{% endif %}&quot;</span>
+                 <span class="na">android:hardwareAccelerated=</span><span class="s">&quot;true&quot;</span> <span class="nt">&gt;</span>
+</code></pre></div>
+
+<p>And change it to :</p>
+<div class="codehilite"><pre><span></span><code>    <span class="nt">&lt;application</span> <span class="na">android:label=</span><span class="s">&quot;@string/app_name&quot;</span>
+                 <span class="na">android:icon=</span><span class="s">&quot;@drawable/icon&quot;</span>
+<span class="hll">                 <span class="na">android:usesCleartextTraffic=</span><span class="s">&quot;true&quot;</span>
+</span>                 <span class="na">android:allowBackup=</span><span class="s">&quot;{{ args.allow_backup }}&quot;</span>
+                 <span class="na">android:theme=</span><span class="s">&quot;@android:style/Theme.NoTitleBar{% if not args.window %}.Fullscreen{% endif %}&quot;</span>
+                 <span class="na">android:hardwareAccelerated=</span><span class="s">&quot;true&quot;</span> <span class="nt">&gt;</span>
+</code></pre></div>
+
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you modify <code>buildozer.spec</code>, it can alter the manifest. So you will need to reproduce this step !</p>
+</div>
+<p>Alternatively, you can use this sed command to do it, in one line</p>
+<div class="codehilite"><pre><span></span><code>sed -i &#39;s/&lt;application android:label/&lt;application android:usesCleartextTraffic=&quot;true&quot; android:label/g&#39; .buildozer/android/platform/build/dists/com.guy/templates/AndroidManifest.tmpl.xml
+</code></pre></div>
+
+<h2 id="deploy-in-androids-playstore">Deploy in android's playstore</h2>
+<p>You will need to sign your apk, before uploading it. You will need <a href="https://openjdk.java.net/tools/index.html">OpenJDK tools</a> !</p>
+<p>To release your apk:</p>
+<div class="codehilite"><pre><span></span><code>buildozer android release
+</code></pre></div>
+
+<p>It will produce an apk file ... but the command ends with an error "FileNotFoundError: [Errno 2] No such file or directory ...""</p>
+<p>In fact, the APK release is here : ".buildozer/android/platform/build/dists/com.guy/build/outputs/apk/release/com.guy-release-unsigned.apk"</p>
+<p>Just copy it, in the <code>bin</code> folder:</p>
+<div class="codehilite"><pre><span></span><code>cp .buildozer/android/platform/build/dists/com.guy/build/outputs/apk/release/com.guy-release-unsigned.apk bin/
+</code></pre></div>
+
+<p>To sign your APK, you will need to create your self-signed key !</p>
+<div class="codehilite"><pre><span></span><code>keytool -genkey -v -keystore my-app.keystore -alias cb-play -keyalg RSA -keysize 2048 -validity 10000
+</code></pre></div>
+
+<p>When you get your keystore (file <code>my-app.keystore</code>), you can sign the apk, by doing :</p>
+<div class="codehilite"><pre><span></span><code>jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ./my-app.keystore ./bin/com.guy-release-unsigned.apk  cb-play
+</code></pre></div>
+
+<p>When it's done, just <a href="https://developer.android.com/studio/command-line/zipalign">zipalign</a> the apk, like that :</p>
+<div class="codehilite"><pre><span></span><code>zipalign -v 4 ./bin/com.guy-release-unsigned.apk ./bin/myapp.apk
+</code></pre></div>
+
+<p>Now, your apk <code>myapp.apk</code> can be distributed, or uploaded to <a href="https://play.google.com/apps/publish">playstore</a>.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Here is the <a href="https://cdn.glitch.com/00392733-d07a-42ad-a17a-c0df9475b388%2Fmyapp.apk?v=1574618969557">myapp.apk (~13Mo)</a>, that I have released when following this howto. Succesfully installed and tested on android9 &amp; android10 ! And here is <a href="https://play.google.com/store/apps/details?id=demo.com.guy">this apk on the playstore</a> !</p>
+</div>
+<h2 id="known-limitations">Known Limitations</h2>
+<ul>
+<li>The <strong>android's BACK KEY</strong> does nothing ;-( (NEED TO IMPROVE THAT). You should provide a way to let the user quit your app (by calling <code>self.exit()</code>)</li>
+<li>If you plan to use <a href="https://github.com/manatlan/vbuild">vbuild</a> (to compile vue sfc components in html), to generate html. You can't use <a href="https://github.com/manatlan/vbuild/blob/master/doc/PyComponent.md">PyComponents</a>. And you will need vbuild &gt;= 0.8.1. (the module <a href="https://github.com/flexxui/pscript/issues/38#issuecomment-521960204">pscript</a> can't be embedded in an apk)</li>
+<li>BTW, Some python modules can't be embedded in an APK : use pure python modules !</li>
+<li>When you use html in docstring in a guy class. You will need to prefix your docstring like this <code>__doc__="""html"""</code>. Because buildozer remove real docstrings from py files.</li>
+<li>Don't try to embed a GuyApp which are runned by <code>app.runCef()</code> or <code>app.serve()</code> ... only <code>app.run()</code> will work ;-)</li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a href="https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android">https://linuxfr.org/news/minipy-un-serveur-python-dans-son-android</a></li>
+</ul>
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../howto_build_exe_windows/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Freeze exe/windows" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Freeze exe/windows
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../howto_build_whl_package/" class="md-footer__link md-footer__link--next" aria-label="Next: Release a pypi/whl/package" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Release a pypi/whl/package
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b97dbffb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.0238f547.min.js"></script>
+      
+    
+  </body>
+</html>
